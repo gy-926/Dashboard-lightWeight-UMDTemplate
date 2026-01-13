@@ -1,6 +1,6 @@
 <template>
   <div>
-    <KvvOrder />
+    <ProductClassification />
   </div>
 </template>
 
@@ -11,4 +11,5 @@
 import KvcCardDemo from '@/dev/views/DemoKvcCard.vue';
 import ComposableShowcase from '@/dev/views/composables/ComposableShowcase.vue';
 import KvvOrder from '@/build/components/KvvOrder.vue';
+import { ProductClassification } from '@/build/components';
 </script>

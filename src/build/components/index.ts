@@ -6,4 +6,8 @@ import KvcCardChild from "./KvcCardChild.vue";
 import KvvOrder from "./KvvOrder.vue";
 import KvcTable from "./KvcTable.vue";
 
-export { KvcCard, KvcCardChild, KvvOrder, KvcTable };
+// 商品归类AI系统组件
+export * from "./ProductClassification";
+import { ProductClassification } from "./ProductClassification";
+
+export { KvcCard, KvcCardChild, KvvOrder, KvcTable, ProductClassification };

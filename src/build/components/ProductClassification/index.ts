@@ -1,0 +1,8 @@
+export { default as ProductClassification } from './ProductClassification.vue'
+export { default as SingleClassify } from './SingleClassify.vue'
+export { default as BatchClassify } from './BatchClassify.vue'
+export { default as HistoryCases } from './HistoryCases.vue'
+export { default as KnowledgeBase } from './KnowledgeBase.vue'
+export { default as UserManagement } from './UserManagement.vue'
+export { default as ModelConfig } from './ModelConfig.vue'
+export { default as Dashboard } from './Dashboard.vue'
