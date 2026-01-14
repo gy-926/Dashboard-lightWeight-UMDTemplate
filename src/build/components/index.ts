@@ -10,4 +10,12 @@ import KvcTable from "./KvcTable.vue";
 export * from "./ProductClassification";
 import { ProductClassification } from "./ProductClassification";
 
-export { KvcCard, KvcCardChild, KvvOrder, KvcTable, ProductClassification };
+// 原始记录风险评价系统组件
+export * from "./RiskEvaluation";
+import { RiskEvaluation } from "./RiskEvaluation";
+
+// 纸质原始记录智能识别系统组件
+export * from "./RecordRecognition";
+import { RecordRecognition } from "./RecordRecognition";
+
+export { KvcCard, KvcCardChild, KvvOrder, KvcTable, ProductClassification, RiskEvaluation, RecordRecognition };

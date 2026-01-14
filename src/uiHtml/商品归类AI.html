@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据与LLM双驱商品归类系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #1abc9c;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --border-color: #e9ecef;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+        }
+        
+        .logo-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .nav-section {
+            padding: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0 20px 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--accent-color);
+        }
+        
+        .nav-link i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        /* 主内容区样式 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .admin-badge {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: var(--secondary-color);
+        }
+        
+        /* 智能归类页面样式 */
+        .input-area {
+            margin-bottom: 25px;
+        }
+        
+        .input-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .text-input, .textarea-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .text-input:focus, .textarea-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .textarea-input {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .textarea-input.small {
+            min-height: 80px;
+        }
+        
+        .textarea-input.large {
+            min-height: 150px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-accent {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-accent:hover {
+            background-color: #17a589;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .result-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        /* 结构化信息输出框 */
+        .structured-output {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            color: #2c3e50;
+        }
+        
+        .structured-key {
+            color: #3498db;
+            font-weight: 600;
+        }
+        
+        .structured-value {
+            color: #27ae60;
+        }
+        
+        .structured-object {
+            color: #8e44ad;
+        }
+        
+        /* 按钮组样式 */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* 新的归类结果展示样式 */
+        .classification-main {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .hs-code {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .standard-name {
+            font-size: 1.4rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .confidence-badge {
+            background-color: #e8f4fc;
+            color: var(--secondary-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .classification-details {
+            margin-top: 20px;
+        }
+        
+        .classification-level {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e9ecef;
+        }
+        
+        .level-left {
+            flex: 0 0 200px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .level-right {
+            flex: 1;
+            color: #666;
+        }
+        
+        .level-code {
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-right: 10px;
+            min-width: 100px;
+            display: inline-block;
+        }
+        
+        .level-description {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .level-basis {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.5;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        
+        /* 表格样式 */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .data-table th {
+            background-color: #f1f5f9;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+        
+        .data-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .hs-code-cell {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        /* 知识库样式 */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+        
+        /* 系统管理样式 */
+        .config-section {
+            margin-bottom: 35px;
+        }
+        
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .config-label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .config-value {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--accent-color);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* 知识库列表样式 */
+        .knowledge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .knowledge-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+            transition: all 0.2s;
+        }
+        
+        .knowledge-item:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .knowledge-info {
+            flex: 1;
+        }
+        
+        .knowledge-name {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .knowledge-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .knowledge-chapter {
+            background-color: #e8f4fc;
+            color: var(--secondary-color);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .sidebar-header .logo-text, 
+            .section-title, 
+            .nav-link span {
+                display: none;
+            }
+            
+            .nav-link {
+                justify-content: center;
+                padding: 18px 0;
+            }
+            
+            .nav-link i {
+                font-size: 1.3rem;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
+            
+            .data-table {
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .user-info {
+                align-self: flex-end;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .filter-options {
+                justify-content: center;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .classification-level {
+                flex-direction: column;
+            }
+            
+            .level-left {
+                flex: 1;
+                margin-bottom: 10px;
+            }
+            
+            .hs-code {
+                font-size: 2.2rem;
+            }
+            
+            .standard-name {
+                font-size: 1.2rem;
+            }
+            
+            .knowledge-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .knowledge-chapter {
+                margin-left: 0;
+            }
+        }
+        
+        /* 页面切换动画 */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 文件上传区域 */
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover, .file-upload-area.dragover {
+            border-color: var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+        
+        /* 模型状态指示器 */
+        .model-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-offline {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-online .status-dot {
+            background-color: var(--success-color);
+        }
+        
+        .status-offline .status-dot {
+            background-color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏导航 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-robot logo-icon"></i>
+                <span class="logo-text">商品归类AI</span>
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <h3 class="section-title">商品智能归类</h3>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" data-page="single-classify">
+                    <i class="fas fa-tag"></i>
+                    <span>单条商品信息归类</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="batch-classify">
+                    <i class="fas fa-layer-group"></i>
+                    <span>多条商品信息归类</span>
+                </a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <h3 class="section-title">归类知识库</h3>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link" data-page="history-cases">
+                    <i class="fas fa-history"></i>
+                    <span>历史归类案例</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="classification-rules">
+                    <i class="fas fa-gavel"></i>
+                    <span>归类规则和知识库管理</span>
+                </a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <h3 class="section-title">系统管理</h3>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link" data-page="user-management">
+                    <i class="fas fa-users-cog"></i>
+                    <span>用户管理</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="model-config">
+                    <i class="fas fa-cogs"></i>
+                    <span>模型配置</span>
+                </a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>系统概览</span>
+                </a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 顶部栏 -->
+        <div class="header">
+            <h1 class="page-title">单条商品信息智能归类</h1>
+            <div class="user-info">
+                <div class="user-avatar">吴</div>
+                <div>
+                    <div>吴璟 (管理员)</div>
+                    <div class="admin-badge">管理员</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 单条商品归类页面 -->
+        <div id="single-classify" class="page active">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-edit"></i> 商品信息输入</h2>
+                
+                <div class="input-area">
+                    <label class="input-label">商品名称</label>
+                    <textarea class="textarea-input small" id="product-name" placeholder="请输入商品名称，如：'木制工艺品（旧）'"></textarea>
+                </div>
+                
+                <div class="input-area">
+                    <label class="input-label">商品描述</label>
+                    <textarea class="textarea-input small" id="product-description" placeholder="请输入商品详细描述，例如：木制，柚木，榉木制等，拉丁文 tectona grangis，装饰用"></textarea>
+                </div>
+                
+                <div class="input-area">
+                    <label class="input-label">详细规格参数</label>
+                    <textarea class="textarea-input large" id="product-specs" placeholder="例如：
+1:品牌类型；
+2:出口享惠情况；
+3:用途（饰面用等）；
+4:种类（中文、拉丁文属名、拉丁文种名）；
+5:规格（长度x宽度）；
+6:厚度（毫米）；
+7:加工方法（纵锯、刨切、旋切等）；
+8:请注明立方米数或平方米数；
+9:等级；
+10:GTIN；
+11:CAS；
+12:其他"></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" id="extract-btn">
+                        <i class="fas fa-stream"></i> 结构化信息提取
+                    </button>
+                </div>
+                
+                <div class="input-area">
+                    <label class="input-label">结构化信息输出</label>
+                    <div class="structured-output" id="structured-output">
+等待提取结构化信息...
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="btn btn-primary" id="classify-btn" style="padding: 14px 30px; font-size: 1.1rem;">
+                        <i class="fas fa-brain"></i> AI智能归类
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-poll"></i> 归类结果</h2>
+                <div class="result-area" id="classification-result">
+                    <div id="result-content">
+                        <!-- 结果将通过JavaScript动态生成 -->
+                        <div class="classification-main">
+                            <div class="hs-code">4408901999</div>
+                            <div class="standard-name">饰面用单板（厚度≤6mm），经旋切，椴木制</div>
+                            <div class="confidence-badge">AI分析置信度: 92.5%</div>
+                        </div>
+                        
+                        <div class="classification-details">
+                            <div class="classification-level">
+                                <div class="level-left">章（2位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">44</span>（第44章 木及木制品；木炭）
+                                    <div class="level-basis">依据：商品为木制品，符合第44章范围。第44章包括木及木制品；木炭。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-level">
+                                <div class="level-left">品目（4位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">4408</span>（饰面用单板等）
+                                    <div class="level-basis">依据：商品为经旋切的饰面用单板，厚度≤6mm，符合品目4408的描述："饰面用单板，制胶合板用单板以及其他经纵锯、刨切或旋切的木材，不论是否刨平、砂光或指榫结合，厚度不超过6毫米"。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-level">
+                                <div class="level-left">子目（5位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">44089</span>（其他）
+                                    <div class="level-basis">依据：非针叶木，非热带木，归类于"其他"。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-level">
+                                <div class="level-left">子目（6位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">440890</span>（其他）
+                                    <div class="level-basis">依据：非竹制，归类于"其他"。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-level">
+                                <div class="level-left">子目（7位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">4408901</span>（厚度≤6mm）
+                                    <div class="level-basis">依据：商品厚度为2.5mm，符合厚度≤6mm的条件。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-level">
+                                <div class="level-left">子目（8位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">44089012</span>（经旋切）
+                                    <div class="level-basis">依据：商品加工方法为旋切，符合"经旋切"的描述。</div>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-level">
+                                <div class="level-left">子目（10位）：</div>
+                                <div class="level-right">
+                                    <span class="level-code">4408901999</span>（其他）
+                                    <div class="level-basis">依据：非热带木，非特定树种，归类于"其他"。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-area" style="margin-top: 25px;">
+                    <label class="input-label">人工修正/备注</label>
+                    <textarea class="textarea-input small" id="manual-correction" placeholder="如果AI归类结果不准确，可在此处进行人工修正并添加备注..."></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn btn-success">
+                        <i class="fas fa-save"></i> 保存到知识库
+                    </button>
+                    <button class="btn btn-accent">
+                        <i class="fas fa-download"></i> 导出归类报告
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 批量商品归类页面 -->
+        <div id="batch-classify" class="page">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-file-import"></i> 批量商品导入</h2>
+                
+                <div class="file-upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <h3>拖拽文件到这里或点击上传</h3>
+                    <p>支持 CSV、Excel、TXT 格式，每次最多处理1000条商品信息</p>
+                    <input type="file" id="file-upload" accept=".csv,.xlsx,.xls,.txt" style="display: none;">
+                    <button class="btn btn-primary" style="margin-top: 15px;" id="upload-btn">
+                        <i class="fas fa-folder-open"></i> 选择文件
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>商品名称</th>
+                                <th>商品描述</th>
+                                <th>10位HS编码（参考）</th>
+                                <th>2位HS编码</th>
+                                <th>4位HS编码</th>
+                                <th>5位HS编码</th>
+                                <th>6位HS编码</th>
+                                <th>7位HS编码</th>
+                                <th>8位HS编码</th>
+                                <th>10位HS编码</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-table">
+                            <!-- 表格数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 25px;">
+                    <button class="btn btn-primary" id="batch-classify-btn">
+                        <i class="fas fa-play-circle"></i> 开始批量归类
+                    </button>
+                    <button class="btn btn-success">
+                        <i class="fas fa-file-export"></i> 导出全部结果
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 历史归类案例页面 -->
+        <div id="history-cases" class="page">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-database"></i> 历史归类案例库</h2>
+                
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="搜索商品名称、HS编码或关键词...">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-search"></i> 搜索
+                    </button>
+                </div>
+                
+                <div class="filter-options">
+                    <span class="filter-btn active">全部</span>
+                    <span class="filter-btn">今日新增</span>
+                    <span class="filter-btn">高置信度</span>
+                    <span class="filter-btn">已验证</span>
+                    <span class="filter-btn">待审核</span>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>商品名称</th>
+                                <th>商品描述</th>
+                                <th>HS编码（10位）</th>
+                                <th>归类依据</th>
+                                <th>创建时间</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table">
+                            <!-- 表格数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: center; margin-top: 25px;">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-redo"></i> 加载更多
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 归类规则和知识库管理页面 -->
+        <div id="classification-rules" class="page">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-book"></i> 归类规则和知识库管理</h2>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+                    <div>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 添加新规则
+                        </button>
+                        <button class="btn btn-accent" style="margin-left: 10px;">
+                            <i class="fas fa-sync"></i> 从文件导入规则
+                        </button>
+                    </div>
+                    
+                    <div class="model-status status-online">
+                        <span class="status-dot"></span>
+                        <span>规则引擎: 运行中</span>
+                    </div>
+                </div>
+                
+                <div class="knowledge-list">
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">归类总规则</div>
+                            <div class="knowledge-desc">商品归类的基本原则和方法论，包含六项总规则</div>
+                        </div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">中华人民共和国进出口税则（2025）</div>
+                            <div class="knowledge-desc">最新版中国进出口税则，包含所有税目和税率信息</div>
+                        </div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">进出口税则商品及品目注释</div>
+                            <div class="knowledge-desc">WCO协调制度注释的中文翻译版，详细解释各品目范围</div>
+                        </div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">HS编码规则融合知识库</div>
+                            <div class="knowledge-desc">整合各类HS编码规则和判例，支持智能匹配和推理</div>
+                        </div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">热带木知识库</div>
+                            <div class="knowledge-desc">热带木材种类、特征及归类规则数据库</div>
+                        </div>
+                        <div class="knowledge-chapter">适用章节：第44章</div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">濒危植物知识库</div>
+                            <div class="knowledge-desc">CITES公约濒危植物物种及监管要求数据库</div>
+                        </div>
+                        <div class="knowledge-chapter">适用章节：第44章</div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">红木知识库</div>
+                            <div class="knowledge-desc">红木种类、鉴别特征及归类规则数据库</div>
+                        </div>
+                        <div class="knowledge-chapter">适用章节：第44章</div>
+                    </div>
+                    
+                    <div class="knowledge-item">
+                        <div class="knowledge-info">
+                            <div class="knowledge-name">自定义归类属性知识库</div>
+                            <div class="knowledge-desc">用户自定义的商品属性和归类规则数据库</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 20px; color: var(--primary-color);">知识库统计</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">8</div>
+                            <div style="font-size: 0.9rem; color: #666;">知识库总数</div>
+                        </div>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">12,458</div>
+                            <div style="font-size: 0.9rem; color: #666;">规则条目数</div>
+                        </div>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">2025-01</div>
+                            <div style="font-size: 0.9rem; color: #666;">最新版本</div>
+                        </div>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">97.3%</div>
+                            <div style="font-size: 0.9rem; color: #666;">规则覆盖率</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用户管理页面 -->
+        <div id="user-management" class="page">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-user-shield"></i> 用户与权限管理</h2>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> 添加新用户
+                    </button>
+                    
+                    <div style="display: flex; gap: 15px;">
+                        <div class="model-status status-online">
+                            <span class="status-dot"></span>
+                            <span>在线用户: 2</span>
+                        </div>
+                        <div class="model-status status-online">
+                            <span class="status-dot"></span>
+                            <span>活跃会话: 2</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>角色</th>
+                                <th>部门</th>
+                                <th>最后登录</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <!-- 表格数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 模型配置页面 -->
+        <div id="model-config" class="page">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-sliders-h"></i> AI模型配置</h2>
+                
+                <div class="config-section">
+                    <h3 style="margin-bottom: 20px; color: var(--primary-color);">模型选择</h3>
+                    
+                    <div class="config-item">
+                        <div class="config-label">当前主模型</div>
+                        <div class="config-value">
+                            <select style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <option>GPT-4 Turbo</option>
+                                <option>Claude 3 Opus</option>
+                                <option>ERNIE 4.0</option>
+                                <option>Qwen-Max</option>
+                            </select>
+                            <div class="model-status status-online">
+                                <span class="status-dot"></span>
+                                <span>服务正常</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">备用模型</div>
+                        <div class="config-value">
+                            <select style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <option>GPT-3.5 Turbo</option>
+                                <option>Claude 3 Sonnet</option>
+                                <option>ERNIE 3.5</option>
+                                <option>Qwen-Plus</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="config-section">
+                    <h3 style="margin-bottom: 20px; color: var(--primary-color);">模型参数</h3>
+                    
+                    <div class="config-item">
+                        <div class="config-label">温度参数 (Temperature)</div>
+                        <div class="config-value">
+                            <input type="range" min="0" max="1" step="0.1" value="0.2" style="width: 200px;">
+                            <span>0.2 (较低创造性，更高一致性)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">最大输出长度</div>
+                        <div class="config-value">
+                            <input type="number" value="1000" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border-color); width: 120px;">
+                            <span>tokens</span>
+                        </div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">启用实时归类</div>
+                        <div class="config-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="config-item">
+                        <div class="config-label">启用多模型验证</div>
+                        <div class="config-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button class="btn btn-success">
+                        <i class="fas fa-check"></i> 保存配置
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-bolt"></i> 测试模型连接
+                    </button>
+                    <button class="btn btn-accent">
+                        <i class="fas fa-history"></i> 重置为默认
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系统概览页面 -->
+        <div id="dashboard" class="page">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-tachometer-alt"></i> 系统概览</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px;">
+                    <div style="background: linear-gradient(135deg, #3498db, #2c3e50); color: white; padding: 25px; border-radius: 10px;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 10px;">今日归类数量</h3>
+                        <div style="font-size: 2.5rem; font-weight: 700;">1,247</div>
+                        <div style="display: flex; align-items: center; margin-top: 10px;">
+                            <i class="fas fa-arrow-up" style="color: #1abc9c; margin-right: 5px;"></i>
+                            <span>较昨日 +12%</span>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 25px; border-radius: 10px;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 10px;">归类准确率</h3>
+                        <div style="font-size: 2.5rem; font-weight: 700;">94.2%</div>
+                        <div style="display: flex; align-items: center; margin-top: 10px;">
+                            <i class="fas fa-arrow-up" style="color: #f1c40f; margin-right: 5px;"></i>
+                            <span>较上月 +2.3%</span>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; padding: 25px; border-radius: 10px;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 10px;">知识库规模</h3>
+                        <div style="font-size: 2.5rem; font-weight: 700;">12,458</div>
+                        <div style="display: flex; align-items: center; margin-top: 10px;">
+                            <i class="fas fa-database" style="margin-right: 5px;"></i>
+                            <span>条归类案例</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: var(--primary-color);">归类趋势 (最近7天)</h3>
+                        <div style="background-color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; height: 300px; display: flex; align-items: center; justify-content: center;">
+                            <div style="text-align: center;">
+                                <i class="fas fa-chart-bar" style="font-size: 3rem; color: var(--border-color); margin-bottom: 15px;"></i>
+                                <p>图表区域 - 归类趋势图将在此显示</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 20px; color: var(--primary-color);">热门归类类别</h3>
+                        <div style="background-color: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                            <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                                <span>第44章 - 木及木制品；木炭</span>
+                                <span style="font-weight: 700;">45%</span>
+                            </div>
+                            <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                                <span>第85章 - 电机、电气设备</span>
+                                <span style="font-weight: 700;">32%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>其他类别</span>
+                                <span style="font-weight: 700;">23%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面切换功能
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 移除所有链接的active类
+                document.querySelectorAll('.nav-link').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // 添加当前链接的active类
+                this.classList.add('active');
+                
+                // 隐藏所有页面
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // 显示目标页面
+                const pageId = this.getAttribute('data-page');
+                document.getElementById(pageId).classList.add('active');
+                
+                // 更新页面标题
+                const pageTitle = document.querySelector('.page-title');
+                const pageTitles = {
+                    'single-classify': '单条商品信息智能归类',
+                    'batch-classify': '多条商品信息智能归类',
+                    'history-cases': '历史归类案例管理',
+                    'classification-rules': '归类规则和知识库管理',
+                    'user-management': '用户与权限管理',
+                    'model-config': 'AI模型配置',
+                    'dashboard': '系统概览'
+                };
+                
+                pageTitle.textContent = pageTitles[pageId] || '商品归类AI系统';
+            });
+        });
+        
+        // 结构化信息提取功能
+        document.getElementById('extract-btn').addEventListener('click', function() {
+            const productName = document.getElementById('product-name').value;
+            const productDescription = document.getElementById('product-description').value;
+            const productSpecs = document.getElementById('product-specs').value;
+            
+            if (!productName.trim() && !productDescription.trim() && !productSpecs.trim()) {
+                alert('请至少输入一项商品信息');
+                return;
+            }
+            
+            // 模拟结构化信息提取过程
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提取中...';
+            this.disabled = true;
+            
+            // 模拟API调用延迟
+            setTimeout(() => {
+                // 模拟提取的结构化信息
+                const structuredInfo = {
+                    product_name: productName.trim() || "椴木单板",
+                    wood_species: {
+                        chinese_name: "辽椴",
+                        latin_name: "Tilia mandshurica"
+                    },
+                    genus_name: "Tilia",
+                    specific_epithet_Name: "mandshurica",
+                    process: "旋切",
+                    purpose: "饰面用",
+                    size: "1220mm x 2440mm",
+                    thickness: "2.5mm",
+                    volume: "0.5立方米",
+                    grade: "A级",
+                    brand_type: "无品牌",
+                    export_preference: "出口享惠",
+                    processing_method: "旋切",
+                    gtin: "1234567890123",
+                    cas: "9000-00-0",
+                    additional_info: "表面光滑，无节疤"
+                };
+                
+                // 格式化输出结构化信息
+                const outputArea = document.getElementById('structured-output');
+                let formattedOutput = '';
+                
+                for (const [key, value] of Object.entries(structuredInfo)) {
+                    if (typeof value === 'object') {
+                        formattedOutput += `<span class="structured-key">${key}</span>: {\n`;
+                        for (const [subKey, subValue] of Object.entries(value)) {
+                            formattedOutput += `  <span class="structured-key">${subKey}</span>: <span class="structured-value">"${subValue}"</span>,\n`;
+                        }
+                        formattedOutput += '},\n';
+                    } else {
+                        formattedOutput += `<span class="structured-key">${key}</span>: <span class="structured-value">"${value}"</span>,\n`;
+                    }
+                }
+                
+                outputArea.innerHTML = formattedOutput;
+                
+                // 恢复按钮状态
+                this.innerHTML = '<i class="fas fa-stream"></i> 结构化信息提取';
+                this.disabled = false;
+            }, 1200);
+        });
+        
+        // 单条商品归类功能
+        document.getElementById('classify-btn').addEventListener('click', function() {
+            const productName = document.getElementById('product-name').value;
+            const productDescription = document.getElementById('product-description').value;
+            
+            if (!productName.trim() && !productDescription.trim()) {
+                alert('请输入商品名称或描述');
+                return;
+            }
+            
+            // 模拟AI归类过程
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI分析中...';
+            this.disabled = true;
+            
+            // 模拟API调用延迟
+            setTimeout(() => {
+                // 模拟归类结果数据
+                const classificationData = {
+                    hs_code: "4408901999",
+                    standard_name: "饰面用单板（厚度≤6mm），经旋切，椴木制",
+                    confidence: 0.925,
+                    levels: [
+                        {
+                            level: "章（2位）",
+                            code: "44",
+                            description: "第44章 木及木制品；木炭",
+                            basis: "依据：商品为木制品，符合第44章范围。第44章包括木及木制品；木炭。"
+                        },
+                        {
+                            level: "品目（4位）",
+                            code: "4408",
+                            description: "饰面用单板等",
+                            basis: "依据：商品为经旋切的饰面用单板，厚度≤6mm，符合品目4408的描述：\"饰面用单板，制胶合板用单板以及其他经纵锯、刨切或旋切的木材，不论是否刨平、砂光或指榫结合，厚度不超过6毫米\"。"
+                        },
+                        {
+                            level: "子目（5位）",
+                            code: "44089",
+                            description: "其他",
+                            basis: "依据：非针叶木，非热带木，归类于\"其他\"。"
+                        },
+                        {
+                            level: "子目（6位）",
+                            code: "440890",
+                            description: "其他",
+                            basis: "依据：非竹制，归类于\"其他\"。"
+                        },
+                        {
+                            level: "子目（7位）",
+                            code: "4408901",
+                            description: "厚度≤6mm",
+                            basis: "依据：商品厚度为2.5mm，符合厚度≤6mm的条件。"
+                        },
+                        {
+                            level: "子目（8位）",
+                            code: "44089012",
+                            description: "经旋切",
+                            basis: "依据：商品加工方法为旋切，符合\"经旋切\"的描述。"
+                        },
+                        {
+                            level: "子目（10位）",
+                            code: "4408901999",
+                            description: "其他",
+                            basis: "依据：非热带木，非特定树种，归类于\"其他\"。"
+                        }
+                    ]
+                };
+                
+                // 生成归类结果HTML
+                const resultContent = document.getElementById('result-content');
+                let resultHTML = `
+                    <div class="classification-main">
+                        <div class="hs-code">${classificationData.hs_code}</div>
+                        <div class="standard-name">${classificationData.standard_name}</div>
+                        <div class="confidence-badge">AI分析置信度: ${(classificationData.confidence * 100).toFixed(1)}%</div>
+                    </div>
+                    
+                    <div class="classification-details">
+                `;
+                
+                // 添加各级归类结果
+                classificationData.levels.forEach(level => {
+                    resultHTML += `
+                        <div class="classification-level">
+                            <div class="level-left">${level.level}：</div>
+                            <div class="level-right">
+                                <span class="level-code">${level.code}</span>${level.description ? `（${level.description}）` : ''}
+                                <div class="level-basis">${level.basis}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                resultHTML += '</div>';
+                resultContent.innerHTML = resultHTML;
+                
+                // 恢复按钮状态
+                this.innerHTML = '<i class="fas fa-brain"></i> AI智能归类';
+                this.disabled = false;
+                
+                // 滚动到结果区域
+                document.getElementById('classification-result').scrollIntoView({ behavior: 'smooth' });
+            }, 1500);
+        });
+        
+        // 文件上传功能
+        document.getElementById('upload-btn').addEventListener('click', function() {
+            document.getElementById('file-upload').click();
+        });
+        
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || '未选择文件';
+            const uploadArea = document.getElementById('upload-area');
+            uploadArea.innerHTML = `
+                <i class="fas fa-file-excel upload-icon" style="color: #28a745;"></i>
+                <h3>已选择文件: ${fileName}</h3>
+                <p>文件大小: ${(Math.random() * 5 + 0.1).toFixed(2)} MB, 包含约 ${Math.floor(Math.random() * 200 + 50)} 条商品信息</p>
+                <button class="btn btn-primary" style="margin-top: 15px;" id="upload-btn">
+                    <i class="fas fa-sync-alt"></i> 重新选择
+                </button>
+            `;
+            
+            // 重新绑定上传按钮事件
+            document.getElementById('upload-btn').addEventListener('click', function() {
+                document.getElementById('file-upload').click();
+            });
+            
+            // 生成模拟表格数据
+            generateBatchTableData();
+        });
+        
+        // 拖放上传功能
+        const uploadArea = document.getElementById('upload-area');
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function() {
+            this.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const fileName = e.dataTransfer.files[0]?.name || 'dropped_file.csv';
+            this.innerHTML = `
+                <i class="fas fa-file-excel upload-icon" style="color: #28a745;"></i>
+                <h3>已拖放文件: ${fileName}</h3>
+                <p>文件大小: ${(Math.random() * 5 + 0.1).toFixed(2)} MB, 包含约 ${Math.floor(Math.random() * 200 + 50)} 条商品信息</p>
+                <button class="btn btn-primary" style="margin-top: 15px;" id="upload-btn">
+                    <i class="fas fa-sync-alt"></i> 重新选择
+                </button>
+            `;
+            
+            // 重新绑定上传按钮事件
+            document.getElementById('upload-btn').addEventListener('click', function() {
+                document.getElementById('file-upload').click();
+            });
+            
+            // 生成模拟表格数据
+            generateBatchTableData();
+        });
+        
+        // 批量归类功能
+        document.getElementById('batch-classify-btn').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 批量归类中...';
+            this.disabled = true;
+            
+            // 模拟批量处理延迟
+            setTimeout(() => {
+                // 为表格中的每一行添加模拟结果
+                const rows = document.querySelectorAll('#batch-table tr');
+                rows.forEach((row, index) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 12) {
+                        // 根据商品名称设置HS编码
+                        const productName = cells[1].textContent;
+                        let hsCodes = {
+                            '2位': '44',
+                            '4位': '4408',
+                            '5位': '44089',
+                            '6位': '440890',
+                            '7位': '4408901',
+                            '8位': '44089012',
+                            '10位': '4408901290'
+                        };
+                        
+                        // 根据不同商品设置不同的HS编码
+                        if (productName.includes('木炭')) {
+                            hsCodes = {
+                                '2位': '44',
+                                '4位': '4402',
+                                '5位': '44029',
+                                '6位': '440290',
+                                '7位': '4402900',
+                                '8位': '44029000',
+                                '10位': '4402900010'
+                            };
+                        } else if (productName.includes('木制工艺品') || productName.includes('木制装饰品')) {
+                            hsCodes = {
+                                '2位': '44',
+                                '4位': '4420',
+                                '5位': '44201',
+                                '6位': '442011',
+                                '7位': '',
+                                '8位': '',
+                                '10位': '4420199090'
+                            };
+                        } else if (productName.includes('针叶木木片')) {
+                            hsCodes = {
+                                '2位': '44',
+                                '4位': '4401',
+                                '5位': '44012',
+                                '6位': '440121',
+                                '7位': '4401210',
+                                '8位': '44012100',
+                                '10位': '4401210090'
+                            };
+                        } else if (productName.includes('相思木片')) {
+                            hsCodes = {
+                                '2位': '44',
+                                '4位': '4401',
+                                '5位': '44012',
+                                '6位': '440122',
+                                '7位': '4401220',
+                                '8位': '44012200',
+                                '10位': '4401220090'
+                            };
+                        } else if (productName.includes('柚木地板')) {
+                            hsCodes = {
+                                '2位': '44',
+                                '4位': '4418',
+                                '5位': '44187',
+                                '6位': '441875',
+                                '7位': '4418750',
+                                '8位': '44187500',
+                                '10位': '4418750090'
+                            };
+                        }
+                        
+                        // 设置参考编码
+                        cells[3].textContent = hsCodes['10位'];
+                        
+                        // 设置各级编码
+                        cells[4].textContent = hsCodes['2位'];
+                        cells[5].textContent = hsCodes['4位'];
+                        cells[6].textContent = hsCodes['5位'];
+                        cells[7].textContent = hsCodes['6位'];
+                        cells[8].textContent = hsCodes['7位'];
+                        cells[9].textContent = hsCodes['8位'];
+                        cells[10].textContent = hsCodes['10位'];
+                    }
+                });
+                
+                // 恢复按钮状态
+                this.innerHTML = '<i class="fas fa-play-circle"></i> 开始批量归类';
+                this.disabled = false;
+                
+                alert(`批量归类完成！已处理 ${rows.length} 条商品信息。`);
+            }, 2000);
+        });
+        
+        // 生成模拟批量表格数据
+        function generateBatchTableData() {
+            const products = [
+                { id: 1, name: '木制工艺品（旧）', desc: '0，3，木制，柚木制,榉木，等  拉丁文  tectona grangis，装饰用' },
+                { id: 2, name: '木炭', desc: '0，3，硬杂木制，未活化，木炭85% 含水10% 含灰量5%，挥发分15%' },
+                { id: 3, name: '椴木单板', desc: '0，3，饰面用，辽椴 Tilia mandshurica Rupr. et Maxim，非标准970*100-970MM，0.42MM，旋切，40M3，1级' },
+                { id: 4, name: '其他针叶木木片', desc: '0，3，中文：云杉，拉丁文属名PICEA，拉丁文种名： JEZOENSIS    中文：冷杉，拉丁文属名：ABIES,拉丁文种名：NEPHROLEPIS，规格长5-30MM，不规则形状，制浆用，，，木片' },
+                { id: 5, name: '木炭', desc: '0，3，以杂木为原料烧制的木炭，未活化，碳含量：76%，挥发份：14%' },
+                { id: 6, name: '柚木地板', desc: '0，3，已装拼，木制，柚木Tectona grandis，多层地板，600*70*14mm' },
+                { id: 8, name: '木制装饰品（旧）', desc: '0，3，木制，柚木制,榉木，等  拉丁文  tectona grangis，装饰用' },
+                { id: 9, name: '相思木片', desc: '0，3，种类；相思木、Acacia Wood、Acacia mangiumxA.auriculiformis，不规则形状，造纸' },
+                { id: 10, name: '木制装饰品（旧）', desc: '0，3，木制，柚木制,榉木，等  拉丁文  tectona grangis，装饰用' },
+                { id: 11, name: '椴木单板', desc: '0，3，饰面用，辽椴 Tilia mandshurica Rupr. et Maxim，非标准970*970MM，0.5MM，旋切，40.56M3，1级' },
+                { id: 12, name: '木炭', desc: '0，3，以杂木为原料烧制的木炭，未活化，碳含量：76%，挥发份：14%' }
+            ];
+            
+            const tableBody = document.getElementById('batch-table');
+            tableBody.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td>${product.desc}</td>
+                    <td class="hs-code-cell">${product.name.includes('木炭') ? '4402900010' : 
+                                            product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '4420199090' : 
+                                            product.name.includes('椴木单板') ? '4408901290' : 
+                                            product.name.includes('针叶木木片') ? '4401210090' : 
+                                            product.name.includes('相思木片') ? '4401220090' : 
+                                            product.name.includes('柚木地板') ? '4418750090' : '4408901290'}</td>
+                    <td>44</td>
+                    <td>${product.name.includes('木炭') ? '4402' : 
+                         product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '4420' : 
+                         product.name.includes('椴木单板') ? '4408' : 
+                         product.name.includes('针叶木木片') ? '4401' : 
+                         product.name.includes('相思木片') ? '4401' : 
+                         product.name.includes('柚木地板') ? '4418' : '4408'}</td>
+                    <td>${product.name.includes('木炭') ? '44029' : 
+                         product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '44201' : 
+                         product.name.includes('椴木单板') ? '44089' : 
+                         product.name.includes('针叶木木片') ? '44012' : 
+                         product.name.includes('相思木片') ? '44012' : 
+                         product.name.includes('柚木地板') ? '44187' : '44089'}</td>
+                    <td>${product.name.includes('木炭') ? '440290' : 
+                         product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '442011' : 
+                         product.name.includes('椴木单板') ? '440890' : 
+                         product.name.includes('针叶木木片') ? '440121' : 
+                         product.name.includes('相思木片') ? '440122' : 
+                         product.name.includes('柚木地板') ? '441875' : '440890'}</td>
+                    <td>${product.name.includes('木炭') ? '4402900' : 
+                         product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '' : 
+                         product.name.includes('椴木单板') ? '4408901' : 
+                         product.name.includes('针叶木木片') ? '4401210' : 
+                         product.name.includes('相思木片') ? '4401220' : 
+                         product.name.includes('柚木地板') ? '4418750' : '4408901'}</td>
+                    <td>${product.name.includes('木炭') ? '44029000' : 
+                         product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '' : 
+                         product.name.includes('椴木单板') ? '44089012' : 
+                         product.name.includes('针叶木木片') ? '44012100' : 
+                         product.name.includes('相思木片') ? '44012200' : 
+                         product.name.includes('柚木地板') ? '44187500' : '44089012'}</td>
+                    <td class="hs-code-cell">${product.name.includes('木炭') ? '4402900010' : 
+                                             product.name.includes('木制工艺品') || product.name.includes('木制装饰品') ? '4420199090' : 
+                                             product.name.includes('椴木单板') ? '4408901290' : 
+                                             product.name.includes('针叶木木片') ? '4401210090' : 
+                                             product.name.includes('相思木片') ? '4401220090' : 
+                                             product.name.includes('柚木地板') ? '4418750090' : '4408901290'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon" title="单独归类">
+                                <i class="fas fa-tag"></i>
+                            </button>
+                            <button class="btn-icon" title="查看详情">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 初始化历史案例表格数据
+        function initHistoryTable() {
+            const historyData = [
+                { id: 1, name: '红橄榄原木(CN)', description: '0，3，红橄榄 Canarium velutinum，不去皮,不去边，直径41/45CM，长度18.7/11.7M，锯材级 LG，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 2, name: '纳托山榄原木(PQ)', description: '0，3，纳托山榄 Palaquium Warburgianum，不去皮,不去边，直径75CM，长度20M，锯材级，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 3, name: '番龙眼木原木(PM)', description: '0，3，番龙眼 Pometia Pinnata，不去皮,不去边，直径60-114CM，长度5.9-24.6M，锯材级，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 4, name: '南洋合欢原木(ALB)', description: '0，3，南洋合欢ALBIZIA?FALCATARIA，不去皮,不去边，直径111CM，长度9.6M，锯材级，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 5, name: '黄褐榄仁原木(TK)', description: '0，3，黄褐榄仁 Terminalia Calamansanai，不去皮,不去边，直径61-82CM，长度10.8-16.5M，锯材级，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 6, name: '番龙眼木原木(PM)', description: '0，3，番龙眼 Pometia Pinnata，不去皮,不去边，直径36-39CM，长度6.0-19.9M，锯材级 LG，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 7, name: '黄褐榄仁原木(TK)', description: '0，3，黄褐榄仁 Terminalia Calamansanai，不去皮,不去边，直径40-49CM，长度11.6-21.6M，锯材级 LG，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 8, name: '红橄榄原木(CN)', description: '0，3，红橄榄 Canarium velutinum，不去皮,不去边，直径50-59CM，长度7.7-19.3M，锯材级，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' },
+                { id: 9, name: '海棠木原木(CL)', description: '0，3，海棠木 CALOPHYLLUM INOPHYLLUM，不去皮,不去边，直径44-47CM，长度7.8-19.1M，锯材级 LG，未蓝变，未烘干，20240116', code: '4403499090', basis: '热带木原木，非针叶木', date: '2024-01-16', status: '已验证' }
+            ];
+            
+            const tableBody = document.getElementById('history-table');
+            tableBody.innerHTML = '';
+            
+            historyData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.description}</td>
+                    <td class="hs-code-cell"><strong>${item.code}</strong></td>
+                    <td>${item.basis}</td>
+                    <td>${item.date}</td>
+                    <td><span class="${item.status === '已验证' ? 'status-online' : 'status-offline'}" style="padding: 4px 10px; border-radius: 4px; font-size: 0.85rem;">${item.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon" title="查看详情">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-icon" title="编辑">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 初始化用户表格数据
+        function initUsersTable() {
+            const usersData = [
+                { name: '吴璟', role: '系统管理员', department: '技术部', lastLogin: '2023-10-15 14:30', status: '在线' },
+                { name: '章回', role: '系统管理员', department: '技术部', lastLogin: '2023-10-14 11:20', status: '在线' }
+            ];
+            
+            const tableBody = document.getElementById('users-table');
+            tableBody.innerHTML = '';
+            
+            usersData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td><span style="background-color: #e8f4fc; color: #3498db; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem;">${item.role}</span></td>
+                    <td>${item.department}</td>
+                    <td>${item.lastLogin}</td>
+                    <td><span class="${item.status === '在线' ? 'status-online' : 'status-offline'}" style="padding: 4px 10px; border-radius: 4px; font-size: 0.85rem;">${item.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon" title="编辑用户">
+                                <i class="fas fa-user-edit"></i>
+                            </button>
+                            <button class="btn-icon" title="重置密码">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 页面加载时初始化表格数据
+        document.addEventListener('DOMContentLoaded', function() {
+            initHistoryTable();
+            initUsersTable();
+            
+            // 初始化批量表格数据
+            generateBatchTableData();
+            
+            // 为筛选按钮添加点击事件
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+            
+            // 为单条商品归类页面添加示例数据
+            document.getElementById('product-name').value = '椴木单板';
+            document.getElementById('product-description').value = '木制，椴木制，拉丁文 Tilia mandshurica，饰面用';
+            document.getElementById('product-specs').value = `1:品牌类型：无品牌；
+2:出口享惠情况：出口享惠；
+3:用途：饰面用；
+4:种类：中文名称：辽椴，拉丁文属名：Tilia，拉丁文种名：mandshurica；
+5:规格：1220mm x 2440mm；
+6:厚度：2.5mm；
+7:加工方法：旋切；
+8:请注明立方米数或平方米数：0.5立方米；
+9:等级：A级；
+10:GTIN：1234567890123；
+11:CAS：9000-00-0；
+12:其他：表面光滑，无节疤`;
+        });
+    </script>
+</body>
+</html>
