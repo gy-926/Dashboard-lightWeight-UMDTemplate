@@ -1,30 +1,34 @@
 {
-  "name": "kivii-component-template",
-  "version": "1.0.0",
-  "description": "组件开发启动模板",
-  "keywords": [],
-  "author": "Kivii & Wemt Team",
-  "license": "MIT",
-  "type": "module",
-  "main": "dist/kivii-component-template.umd.js",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
-    "typescript": "^5.0.0",
-    "vite": "^5.0.0",
-    "vue": "^3.4.0",
-    "vue-tsc": "^2.0.0",
-    "terser": "^5.0.0"
-  },
-  "peerDependencies": {
-    "vue": "^3.0.0"
-  }
+	"name": "kivii-component-template",
+	"version": "1.0.0",
+	"description": "组件开发启动模板",
+	"keywords": [],
+	"author": "Kivii & Wemt Team",
+	"license": "MIT",
+	"type": "module",
+	"main": "dist/kivii-component-template.umd.js",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"type-check": "vue-tsc --noEmit"
+	},
+	"devDependencies": {
+		"@vitejs/plugin-vue": "^5.0.0",
+		"autoprefixer": "^10.4.27",
+		"postcss": "^8.5.6",
+		"tailwindcss": "^3.4.19",
+		"terser": "^5.0.0",
+		"typescript": "^5.0.0",
+		"vite": "^5.0.0",
+		"vite-plugin-css-injected-by-js": "^4.0.1",
+		"vue": "^3.4.0",
+		"vue-tsc": "^2.0.0"
+	},
+	"peerDependencies": {
+		"vue": "^3.0.0"
+	}
 }

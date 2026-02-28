@@ -1,18 +1,16 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
-import { inlineCss } from "./plugins/vite-plugin-inline-css";
+import cssInjectedByJs from "vite-plugin-css-injected-by-js";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), inlineCss()],
+  plugins: [vue(), cssInjectedByJs()],
   build: {
     // 输出目录
     outDir: resolve(__dirname, "./dist"),
     // 不清空输出目录
     emptyOutDir: false,
-    // 禁用 CSS 代码分割，将 CSS 内联到 JS 中
-    cssCodeSplit: false,
     lib: {
       // 入口文件
       entry: resolve(__dirname, "src/build.ts"),

@@ -5,6 +5,7 @@ import KvcCard from "./KvcCard.vue";
 import KvcCardChild from "./KvcCardChild.vue";
 import KvvOrder from "./KvvOrder.vue";
 import KvcTable from "./KvcTable.vue";
+import ThemeSwitchTest from "./ThemeSwitchTest.vue";
 
 // 商品归类AI系统组件
 export * from "./ProductClassification";
@@ -18,4 +19,4 @@ import { RiskEvaluation } from "./RiskEvaluation";
 export * from "./RecordRecognition";
 import { RecordRecognition } from "./RecordRecognition";
 
-export { KvcCard, KvcCardChild, KvvOrder, KvcTable, ProductClassification, RiskEvaluation, RecordRecognition };
+export { KvcCard, KvcCardChild, KvvOrder, KvcTable, ThemeSwitchTest, ProductClassification, RiskEvaluation, RecordRecognition };
