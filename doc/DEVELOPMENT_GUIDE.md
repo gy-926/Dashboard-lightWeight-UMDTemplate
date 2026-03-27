@@ -335,3 +335,76 @@ const manifest: Manifest = {
 1.  **自文档化**: 开发者可以直接在代码中了解组件的基本信息。
 2.  **元数据提取**: 虽然目前构建流程可能未自动提取此信息，但它可以作为未来自动化工具（如自动生成文档、自动同步到库 Manifest）的数据源。
 3.  **运行时访问**: 如果组件将其暴露（例如通过 `defineExpose`），父组件可以在运行时获取子组件的元数据。
+
+---
+
+## 9. 样式隔离方案 (Style Isolation)
+
+为了确保组件库的样式既不污染宿主环境，也不被宿主环境覆盖，采用 Tailwind 的作用域限制与 Vue 高阶组件（HOC）包裹的组合方案。
+
+- 原理概述
+    - 编译期在 Tailwind 中设置 `important`，限定生成的类名都挂在唯一作用域 `.kivii-demo-lib-wrapper` 下，并提升权重。
+    - 运行期通过高阶组件统一为所有导出组件包裹一层带该类名的容器 div。
+    - 宿主未添加该类名时不会被污染；宿主普通样式也难以覆盖库内样式。
+
+### 9.1 Tailwind 作用域配置
+
+文件: [tailwind.config.js](file:///Users/_suesusan/Downloads/kivii-component-template-main/tailwind.config.js)
+
+```javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+	content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+	important: '.kivii-demo-lib-wrapper',
+	corePlugins: {
+		preflight: false,
+	},
+	darkMode: 'class',
+	theme: { extend: {} },
+	plugins: [],
+}
+```
+
+关键点
+
+- `important` 值必须与运行期包裹的类名保持一致
+- 关闭 `preflight`，避免全局重置样式污染宿主
+
+### 9.2 高阶组件包裹 (HOC)
+
+文件: [build.ts](file:///Users/_suesusan/Downloads/kivii-component-template-main/src/build.ts)
+
+```ts
+import { h, defineComponent } from 'vue'
+import { ThemeSwitchTest as _ThemeSwitchTest } from '@/build/components'
+
+const withWrapper = (component: any) =>
+	defineComponent({
+		name: component.name || 'WrappedComponent',
+		inheritAttrs: false,
+		props: component.props || {},
+		emits: component.emits || [],
+		setup(props, { attrs, slots }) {
+			return () =>
+				h(
+					'div',
+					{
+						class: 'kivii-demo-lib-wrapper',
+						style: 'width:100%;height:100%;',
+					},
+					[h(component, { ...props, ...attrs }, slots)],
+				)
+		},
+	})
+
+const ThemeSwitchTest = withWrapper(_ThemeSwitchTest)
+export { ThemeSwitchTest }
+```
+
+### 9.3 使用与注意事项
+
+- 宿主无需任何特殊配置，隔离自动生效
+- 如需修改隔离标识，需同时修改：
+    - `tailwind.config.js` 的 `important` 值
+    - `src/build.ts` 中包裹容器的 `class`
+- 推荐在开发时通过 `pnpm type-check` 与 `pnpm build` 验证修改是否正确生效

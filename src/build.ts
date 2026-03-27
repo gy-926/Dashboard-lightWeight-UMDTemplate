@@ -3,7 +3,8 @@
  */
 import "./style.css";
 import type { App } from "vue";
-import { ThemeSwitchTest } from "@/build/components";
+import { h, defineComponent } from "vue";
+import { ThemeSwitchTest as _ThemeSwitchTest } from "@/build/components";
 
 // 组件类型定义（只有需要传递参数的组件才需要定义类型）
 export type { Props as ThemeSwitchTestProps } from "@/build/components/ThemeSwitchTest.vue";
@@ -12,6 +13,24 @@ export type { Props as ThemeSwitchTestProps } from "@/build/components/ThemeSwit
 export { ThemeSwitchTest, install };
 
 // 组件列表
+const withWrapper = (component: any) =>
+  defineComponent({
+    name: component.name || "WrappedComponent",
+    inheritAttrs: false,
+    props: component.props || {},
+    emits: component.emits || [],
+    setup(props, { attrs, slots }) {
+      return () =>
+        h(
+          "div",
+          { class: "kivii-demo-lib-wrapper", style: "width:100%;height:100%;" },
+          [h(component, { ...props, ...attrs }, slots)]
+        );
+    },
+  });
+
+const ThemeSwitchTest = withWrapper(_ThemeSwitchTest);
+
 const components = {
   ThemeSwitchTest,
 };

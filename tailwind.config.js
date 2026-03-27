@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
+  important: '.kivii-demo-lib-wrapper',
   corePlugins: {
     preflight: false,
   },
@@ -13,4 +14,3 @@ export default {
   },
   plugins: [],
 }
-

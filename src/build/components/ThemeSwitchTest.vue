@@ -98,4 +98,5 @@ const props = withDefaults(defineProps<Props>(), {
 const isDark = computed(() => props.theme === 'dark')
 
 defineEmits(['toggle-theme'])
+defineExpose({ manifest })
 </script>
