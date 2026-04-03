@@ -1,337 +1,188 @@
-# 开发指南 (Development Guide)
+# Dashboard LightWeight UMD Template
 
-本指南旨在帮助开发者快速上手项目，涵盖组件开发、主题配置、打包构建、导出配置以及插件系统的详细说明。
+**A lightweight Vue 3 component library template that builds to a single UMD file — drop-in ready for any HTML page or low-code platform.**
 
-## 1. 项目概览
+[中文文档](#中文说明) | [English](#english)
 
-本项目是一个基于 Vue 3 + TypeScript + Vite + Tailwind CSS 的组件库开发模板。项目支持以 UMD 格式构建，并将样式内联到 JavaScript 文件中，便于在非构建环境（如纯 HTML 页面）中直接引用。
+---
 
-### 目录结构
+## English
 
-```
-├── plugins/                # 本地 Vite 插件
-│   └── vite-plugin-inline-css.ts
-├── src/
-│   ├── build/              # 组件库构建源码
-│   │   ├── components/     # 组件源码目录
-│   │   ├── types/          # 类型定义
-│   │   └── build.ts        # 库入口文件
-│   ├── dev/                # 开发环境源码（用于测试组件）
-│   └── uiHtml/             # 静态 HTML 演示文件
-├── build.ts                # 构建脚本
-├── vite.config.ts          # Vite 配置文件
-├── tailwind.config.js      # Tailwind CSS 配置文件
-└── package.json            # 项目依赖与脚本
-```
+### What is this?
 
-## 2. 快速开始
+This template helps you build **self-contained Vue 3 component libraries** that:
 
-### 安装依赖
+- Output a **single `.umd.js` file** with all styles inlined (no separate CSS)
+- Work in plain HTML via `<script>` tag — no bundler required on the consumer side
+- Support **dark mode** out of the box via Tailwind CSS `class` strategy
+- Integrate with platforms like **Kivii Dashboard** through a bridge API
+
+### Tech Stack
+
+| Tool | Version | Role |
+|------|---------|------|
+| Vue 3 | ^3.4 | Component framework |
+| Vite | ^5.0 | Build tool |
+| TypeScript | ^5.0 | Type safety |
+| Tailwind CSS | ^3.4 | Utility-first styling |
+| ECharts | ^6.0 | Chart rendering (external) |
+| @kivii.com/bridge | ^1.1 | Platform bridge API |
+
+### Quick Start
 
 ```bash
+# Install dependencies
 pnpm install
-# or
-npm install
-```
 
-### 启动开发环境
-
-```bash
+# Start dev server
 pnpm dev
-```
 
-### 构建组件库
-
-```bash
+# Build UMD library
 pnpm build
 ```
 
----
+The output is a single file at `dist/kivii-component-demo-library.umd.js`.
 
-## 3. 组件开发
+### Using the Built Library
 
-### 3.1 创建组件
+```html
+<!-- 1. Load Vue (required peer dependency) -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
-在 `src/build/components` 目录下创建新的组件目录或文件。
+<!-- 2. Load the library (styles are auto-injected) -->
+<script src="./dist/kivii-component-demo-library.umd.js"></script>
 
-**示例：创建 `MyComponent`**
+<!-- 3. Use components -->
+<script>
+  const { createApp } = Vue
+  const { KvcCard, install } = window.VueComponent
 
-1.  新建文件 `src/build/components/MyComponent.vue`：
-
-```vue
-<template>
-	<div class="p-4 bg-white dark:bg-slate-800 rounded shadow">
-		<h2 class="text-xl font-bold text-slate-900 dark:text-white">
-			{{ title }}
-		</h2>
-		<slot></slot>
-	</div>
-</template>
-
-<script setup lang="ts">
-import { withDefaults } from 'vue'
-
-export interface Props {
-	title?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
-	title: '默认标题',
-})
+  const app = createApp({ /* your app */ })
+  app.use({ install })   // register all components globally
+  app.mount('#app')
 </script>
 ```
 
-### 3.2 组件导出
+### Adding a New Component
 
-所有组件需要在 `src/build/components/index.ts` 中统一导出，以便在库入口中引用。
+1. Create `src/build/components/MyWidget.vue`
+2. Export it in `src/build/components/index.ts`
+3. Register it in `src/build.ts` manifest
 
-编辑 `src/build/components/index.ts`：
+See [Development Guide](doc/DEVELOPMENT_GUIDE.md) for full details.
 
-```typescript
-import MyComponent from './MyComponent.vue'
+### Project Structure
 
-// ... 其他组件导入
-
-export {
-	// ... 其他组件
-	MyComponent,
-}
+```
+├── plugins/                  # Local Vite plugins
+│   └── vite-plugin-inline-css.ts
+├── src/
+│   ├── build/                # Library source
+│   │   ├── components/       # Component files
+│   │   ├── types/            # TypeScript types
+│   │   └── build.ts          # Library entry point
+│   └── dev/                  # Dev sandbox (not shipped)
+├── doc/                      # Documentation
+├── dist/                     # Build output
+├── vite.config.ts
+├── tailwind.config.js
+└── package.json
 ```
 
-### 3.3 类型定义与 Manifest
+### Key Design Decisions
 
-为了完善组件库的元数据，建议在 `src/build.ts` 中更新 `manifest` 对象，添加新组件的描述信息。
+- **CSS inlined into JS** — `vite-plugin-css-injected-by-js` injects styles at runtime, so consumers import one file only
+- **Tailwind `preflight: false`** — prevents global style reset from leaking into host pages
+- **Vue externalized** — the host page must provide `Vue` globally; keeps bundle size minimal
+- **ECharts externalized** — loaded separately; accessed via `window.echarts` to avoid duplication
 
-```typescript
-// src/build.ts
+### Documentation
 
-export const manifest = {
-	// ...
-	componentsMap: {
-		// ...
-		MyComponent: '这是一个示例组件',
-	},
-	componentsDetailed: [
-		// ...
-		{
-			name: 'MyComponent',
-			zhName: '示例组件',
-			icon: 'fas fa-cube',
-			description: '这是一个示例组件',
-		},
-	],
-}
-```
+| Document | Description |
+|----------|-------------|
+| [Development Guide](doc/DEVELOPMENT_GUIDE.md) | Component development workflow |
+| [Tailwind Isolation Guide](doc/TAILWIND_ISOLATION_GUIDE.md) | Style scoping strategy |
+| [UMD Usage Guide](doc/UMD读取指南.md) | How to consume the UMD bundle |
+| [UI Design Spec](doc/ui-design-spec.md) | Visual design standards |
+| [AI Coding Standards](doc/AI_CODING_STANDARDS.md) | Coding conventions |
+
+### License
+
+[MIT](LICENSE) © 2024 Kivii & Wemt Team
 
 ---
 
-## 4. 组件主题配置
+## 中文说明
 
-本项目使用 Tailwind CSS 进行样式管理，并支持深色模式（Dark Mode）。
+### 这是什么？
 
-### 4.1 Tailwind 配置
+这是一个 **Vue 3 组件库开发模板**，专为以下场景设计：
 
-Tailwind 配置文件位于 `tailwind.config.js`。
+- 构建产物为**单个 `.umd.js` 文件**，样式内联其中，无需独立 CSS 文件
+- 支持在**纯 HTML 页面**通过 `<script>` 标签直接引入，无需构建环境
+- 内置 **深色模式**支持（Tailwind CSS `class` 策略）
+- 可与 **Kivii Dashboard** 等低代码平台通过 Bridge API 集成
 
-- **DarkMode**: 配置为 `class` 模式。这意味着通过在父元素（通常是组件根元素或 `html` 标签）添加 `.dark` 类来激活深色模式。
-- **Preflight**: `corePlugins.preflight` 设置为 `false`。这是为了避免 Tailwind 的基础样式重置（Preflight）污染宿主环境的样式。
+### 技术栈
 
-### 4.2 开发支持主题的组件
+| 工具 | 版本 | 用途 |
+|------|------|------|
+| Vue 3 | ^3.4 | 组件框架 |
+| Vite | ^5.0 | 构建工具 |
+| TypeScript | ^5.0 | 类型安全 |
+| Tailwind CSS | ^3.4 | 原子化样式 |
+| ECharts | ^6.0 | 图表渲染（外部依赖） |
+| @kivii.com/bridge | ^1.1 | 平台桥接 API |
 
-在编写组件时，应同时定义浅色和深色模式下的样式。
+### 快速开始
 
-**示例：**
+```bash
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm dev
+
+# 构建组件库
+pnpm build
+```
+
+构建产物位于 `dist/kivii-component-demo-library.umd.js`。
+
+### 在 HTML 中使用
 
 ```html
-<!-- text-slate-900 (浅色) / dark:text-white (深色) -->
-<!-- bg-white (浅色) / dark:bg-slate-800 (深色) -->
-<div class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-	Content
-</div>
+<!-- 1. 加载 Vue（必须由宿主提供） -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<!-- 2. 加载组件库（样式自动注入） -->
+<script src="./dist/kivii-component-demo-library.umd.js"></script>
+
+<script>
+  const { createApp } = Vue
+  const { install } = window.VueComponent
+
+  const app = createApp({ /* ... */ })
+  app.use({ install })  // 全局注册所有组件
+  app.mount('#app')
+</script>
 ```
 
-### 4.3 主题切换机制
+### 新增组件流程
 
-组件库通常是被动接收主题状态。推荐的做法是通过 `props` 接收主题设置，或者让宿主应用控制容器的 `class="dark"`。
+1. 在 `src/build/components/` 下创建 `MyWidget.vue`
+2. 在 `src/build/components/index.ts` 中导出
+3. 在 `src/build.ts` 的 `manifest` 中补充元数据
 
-参考 `src/build/components/ThemeSwitchTest.vue` 的实现，它通过 `props.theme` 来动态绑定 `.dark` 类。
+详见 [开发指南](doc/DEVELOPMENT_GUIDE.md)。
 
----
+### 设计说明
 
-## 5. 打包相关配置
+- **样式内联**：使用 `vite-plugin-css-injected-by-js`，构建时将 CSS 转为 JS 字符串，运行时自动插入 `<style>` 标签
+- **关闭 Tailwind Preflight**：防止全局样式重置污染宿主页面
+- **Vue 外部化**：宿主页面自行提供 Vue，减小包体积
+- **ECharts 外部化**：通过 `window.echarts` 访问，避免重复打包
 
-打包配置位于 `vite.config.ts`，主要目标是生成一个包含所有逻辑和样式的 UMD 文件。
+### 许可证
 
-### 5.1 输出配置
-
-- **格式**: `umd`
-- **文件名**: `kivii-component-demo-library.umd.js`
-- **全局变量**: `VueComponent` (在浏览器中通过 `window.VueComponent` 访问)
-
-### 5.2 外部依赖
-
-为了减小包体积，`vue` 被设置为外部依赖（external）。这意味着使用该组件库的项目必须在全局环境中提供 `Vue`。
-
-```typescript
-rollupOptions: {
-  external: ["vue"],
-  output: {
-    globals: {
-      vue: "Vue",
-    },
-  },
-},
-```
-
-### 5.3 样式处理
-
-项目使用 `vite-plugin-css-injected-by-js` 插件将 CSS 自动注入到 JavaScript 中。
-
-- **原理**: 构建时，CSS 会被转换成 JS 字符串，并包含一段代码在运行时自动创建 `<style>` 标签插入到 `<head>` 中。
-- **优势**: 用户只需引入一个 JS 文件即可使用组件库，无需单独引入 CSS 文件。
-
----
-
-## 6. 组件导出相关配置
-
-库的入口文件是 `src/build.ts`。
-
-### 6.1 全局安装 vs 按需引入
-
-入口文件同时支持两种使用方式：
-
-1.  **全局安装 (Vue.use)**:
-    提供了 `install` 方法，会遍历注册所有组件。
-
-    ```typescript
-    const install = (app: App) => {
-    	Object.keys(components).forEach((key) => {
-    		app.component(key, components[key])
-    	})
-    }
-    ```
-
-2.  **按需引入**:
-    直接导出了所有组件对象。
-
-    ```typescript
-    import { KvcCard } from 'your-library-path'
-    ```
-
----
-
-## 7. 插件介绍
-
-### 7.1 构建插件
-
-#### `vite-plugin-css-injected-by-js` (当前使用)
-
-这是目前 `vite.config.ts` 中配置的插件。它负责在构建过程中提取 CSS 并将其注入到生成的 JS 文件中。
-
-#### `plugins/vite-plugin-inline-css.ts` (本地插件)
-
-项目目录 `plugins/` 下包含一个自定义插件 `inlineCss`。这是一个备选方案或参考实现，其功能与 `vite-plugin-css-injected-by-js` 类似，但提供了更底层的控制（如手动读取 CSS 文件并拼接字符串）。
-
-**如果需要切换到本地插件：**
-
-1.  修改 `vite.config.ts`：
-
-    ```typescript
-    // import cssInjectedByJs from "vite-plugin-css-injected-by-js";
-    import { inlineCss } from './plugins/vite-plugin-inline-css'
-
-    export default defineConfig({
-    	plugins: [vue(), inlineCss()], // 替换 cssInjectedByJs()
-    	// ...
-    })
-    ```
-
----
-
-## 8. 配置文件详解 (Configuration Details)
-
-### 8.1 库入口配置 (`src/build.ts`)
-
-`src/build.ts` 是组件库构建的核心入口文件，它负责聚合所有组件、定义安装逻辑以及导出库的元数据（Manifest）。
-
-#### 8.1.1 核心导出
-
-- **样式引入**: `import "./style.css";` 确保 Tailwind CSS 样式被包含在构建中。
-- **组件导出**:
-    - `export { ComponentName }`: 支持具名导入（Named Import），如 `import { KvcCard } from 'lib'`。
-    - `export type { Props }`: 导出组件 Props 类型，为使用 TypeScript 的宿主项目提供类型提示。
-
-#### 8.1.2 安装函数 (`install`)
-
-```typescript
-const install = (app: App) => {
-	Object.keys(components).forEach((key) => {
-		// 自动注册所有组件
-		app.component(key, components[key])
-	})
-}
-```
-
-这是 Vue 插件的标准安装方法。当使用 `app.use(Lib)` 时，Vue 会调用此函数，将库中所有组件注册为全局组件。
-
-#### 8.1.3 库元数据 (`manifest`)
-
-`export const manifest` 定义了整个组件库的描述信息，这对于构建文档网站、低代码平台集成或动态加载非常有用。
-
-| 字段                 | 类型                     | 说明                           | 示例                             |
-| :------------------- | :----------------------- | :----------------------------- | :------------------------------- |
-| `libName`            | `string`                 | 库的内部名称                   | `"VueComponent"`                 |
-| `format`             | `string`                 | 构建格式                       | `"umd"`                          |
-| `fileName`           | `string`                 | 输出文件名                     | `"library.umd.js"`               |
-| `zhName`             | `string`                 | 库的中文名称                   | `"组件库 UMD 包"`                |
-| `author`             | `string`                 | 作者/团队                      | `"Kivii Team"`                   |
-| `version`            | `string`                 | 版本号                         | `"1.0.0"`                        |
-| `description`        | `string`                 | 库的简要描述                   | `"..."`                          |
-| `components`         | `string[]`               | 包含的所有组件键名列表         | `['ThemeSwitchTest', ...]`       |
-| `componentsMap`      | `Record<string, string>` | 组件键名到描述的简单映射       | `{ ThemeSwitchTest: "描述..." }` |
-| `componentsDetailed` | `object[]`               | 组件的详细元数据数组（见下表） | `[{ name: "...", ... }]`         |
-
-**componentsDetailed 结构详解:**
-
-此数组用于描述每个组件的 UI 呈现信息，常用于在组件选择器或文档中展示。
-
-| 字段          | 说明                                    |
-| :------------ | :-------------------------------------- |
-| `name`        | 组件的唯一标识符（英文 Key）            |
-| `zhName`      | 组件的中文显示名称                      |
-| `icon`        | 组件的图标（通常使用 FontAwesome 类名） |
-| `description` | 组件的详细功能描述                      |
-
-### 8.2 组件内部 Manifest (`Component Manifest`)
-
-除了库级别的 Manifest，每个组件内部也可以定义自己的 Manifest，用于自描述。这通常定义在组件的 `<script setup>` 中。
-
-**接口定义 (`src/build/types/manifest.ts`):**
-
-```typescript
-export interface Manifest {
-	name: string // 组件名称
-	type: string // 类型（如 'component', 'module'）
-	description: string // 组件描述
-	version: string // 组件版本
-	author: string // 组件作者
-}
-```
-
-**使用示例:**
-
-```typescript
-const manifest: Manifest = {
-	name: 'ThemeSwitchTest',
-	type: 'component',
-	description: 'Test module for verifying theme switching...',
-	version: '1.0.0',
-	author: 'Developer',
-}
-```
-
-**作用:**
-
-1.  **自文档化**: 开发者可以直接在代码中了解组件的基本信息。
-2.  **元数据提取**: 虽然目前构建流程可能未自动提取此信息，但它可以作为未来自动化工具（如自动生成文档、自动同步到库 Manifest）的数据源。
-3.  **运行时访问**: 如果组件将其暴露（例如通过 `defineExpose`），父组件可以在运行时获取子组件的元数据。
+[MIT](LICENSE) © 2024 Kivii & Wemt Team
