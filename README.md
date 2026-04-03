@@ -108,7 +108,7 @@ See [Development Guide](doc/DEVELOPMENT_GUIDE.md) for full details.
 
 ### License
 
-[MIT](LICENSE) © 2024 Kivii & Wemt Team
+[MIT](LICENSE) © 2024 高源
 
 ---
 
@@ -185,4 +185,4 @@ pnpm build
 
 ### 许可证
 
-[MIT](LICENSE) © 2024 Kivii & Wemt Team
+[MIT](LICENSE) © 2024 高源
