@@ -34,5 +34,6 @@
 	"dependencies": {
 		"@kivii.com/bridge": "^1.1.11",
 		"echarts": "^6.0.0"
-	}
+	},
+	"packageManager": "pnpm@10.28.1+sha1.20817ab95fb7f61154ba5ff3bcb61f27defb6142"
 }
