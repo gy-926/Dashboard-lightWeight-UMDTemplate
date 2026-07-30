@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ThemeTestDemo />
+    <UmdIntegrationTestDemo />
   </div>
 </template>
 
@@ -8,5 +8,5 @@
 /**
  * 尚未集成路由系统，请通过组件引入方式进行预览
  */
-import ThemeTestDemo from '@/dev/views/ThemeTestDemo.vue';
+import UmdIntegrationTestDemo from '@/dev/views/UmdIntegrationTestDemo.vue';
 </script>

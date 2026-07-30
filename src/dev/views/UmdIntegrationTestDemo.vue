@@ -1,7 +1,7 @@
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
     <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-8 text-gray-800">Theme Switching Test</h1>
+      <h1 class="text-3xl font-bold mb-8 text-gray-800">UMD Integration Test</h1>
       
       <div class="mb-8 p-4 bg-white rounded-lg shadow">
         <h2 class="text-xl font-semibold mb-4">External Control Panel</h2>
@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <ThemeSwitchTest 
+      <UmdIntegrationTest
         :theme="currentTheme" 
         @toggle-theme="toggleTheme"
       />
@@ -36,7 +36,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ThemeSwitchTest from '@/build/components/ThemeSwitchTest.vue'
+// 开发环境也走正式 UMD 导出链路，确保包装器行为与交付产物一致
+import { UmdIntegrationTest } from '@/build'
 
 const currentTheme = ref<'light' | 'dark'>('light')
 

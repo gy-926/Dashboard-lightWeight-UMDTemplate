@@ -12,7 +12,7 @@
   <!-- 2. 引入外部依赖库 (由于 vite.config.ts 中将这些依赖 external 化了，宿主必须提供) -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <!-- 如果需要图表组件，也需要引入 echarts -->
-  <script src="https://unpkg.com/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="https://unpkg.com/echarts@6.0.0/dist/echarts.min.js"></script>
 
   <!-- 3. 模拟宿主环境提供的全局对象 (对应 globals 配置: '@kivii.com/bridge': 'kivii') -->
   <script>
@@ -23,7 +23,7 @@
   </script>
 
   <!-- 4. 引入组件库的 UMD 打包文件 (基于 vite.config.ts 的 fileName) -->
-  <script src="./dist/kivii-component-demo-library.umd.js"></script>
+  <script src="./dist/vue-component-test.umd.js"></script>
 
   <!-- 5. 模拟宿主环境的主题色 (CSS 变量) -->
   <style>
@@ -57,14 +57,17 @@
   <div id="app" class="host-container">
     <h2 style="color: #333; margin-bottom: 24px;">在独立 HTML 中加载 UMD 组件库</h2>
 
-    <!-- 6. 使用组件库中导出的组件 (这里以 ThemeSwitchTest 为例) -->
-    <theme-switch-test :theme="currentTheme" @toggle-theme="onToggleTheme"></theme-switch-test>
+    <!-- 6. 使用组件库中导出的 UMD 集成测试组件 -->
+    <umd-integration-test
+      :theme="currentTheme"
+      @toggle-theme="onToggleTheme"
+    ></umd-integration-test>
   </div>
 
   <script>
     const { createApp, ref } = Vue;
-    // 获取组件库暴露的全局变量名 (对应 vite.config.ts 中的 lib.name: 'VueComponent')
-    const ComponentLibrary = window.VueComponent;
+    // 故意与 UMD 实际暴露的 window.vueComponent3 不一致，用于负向加载测试
+    const ComponentLibrary = window.vueComponent;
 
     const app = createApp({
       setup () {
@@ -102,7 +105,7 @@
         Object.keys(ComponentLibrary).forEach(key => {
           // 排除掉非组件的导出，比如普通的函数或变量
           if (typeof ComponentLibrary[key] === 'object' && ComponentLibrary[key].setup) {
-            // 组件名驼峰转中划线 (ThemeSwitchTest -> theme-switch-test)
+            // 组件名驼峰转中划线 (UmdIntegrationTest -> umd-integration-test)
             const kebabName = key.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
             app.component(kebabName, ComponentLibrary[key]);
             app.component(key, ComponentLibrary[key]); // 同时注册驼峰名
@@ -110,7 +113,7 @@
         });
       }
     } else {
-      console.error('未找到 VueComponent 全局变量，请确认 UMD 文件是否正确加载。');
+      console.error('未找到 window.vueComponent，请确认 UMD 文件是否正确加载。');
     }
 
     app.mount('#app');

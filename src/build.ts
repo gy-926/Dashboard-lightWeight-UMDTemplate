@@ -2,37 +2,54 @@
  * 打包配置文件
  */
 import "./style.css";
-import type { App } from "vue";
-import { h, defineComponent } from "vue";
-import { ThemeSwitchTest as _ThemeSwitchTest } from "@/build/components";
+import type { App, Component, ComponentPublicInstance } from "vue";
+import { h, defineComponent, ref } from "vue";
+import { UmdIntegrationTest as _UmdIntegrationTest } from "@/build/components";
+import projectConfig from "../project.config.js";
 
 // 组件类型定义（只有需要传递参数的组件才需要定义类型）
-export type { Props as ThemeSwitchTestProps } from "@/build/components/ThemeSwitchTest.vue";
+export type { Props as UmdIntegrationTestProps } from "@/build/components/UmdIntegrationTest.vue";
 
 // 导出组件
-export { ThemeSwitchTest, install };
+export { UmdIntegrationTest, install };
 
 // 组件列表
-const withWrapper = (component: any) =>
+/**
+ * 为 Tailwind selector strategy 增加运行时作用域。
+ *
+ * 包装器不重复声明内部组件的 props/emits：这样 props、事件监听器和
+ * slots 都会留在 attrs 中并原样交给内部组件，避免事件被包装器截获。
+ */
+const withWrapper = (
+  component: Component & { name?: string; __name?: string },
+) =>
   defineComponent({
-    name: component.name || "WrappedComponent",
+    name: `${component.name || component.__name || "Anonymous"}UmdWrapper`,
     inheritAttrs: false,
-    props: component.props || {},
-    emits: component.emits || [],
-    setup(props, { attrs, slots }) {
+    setup(_, { attrs, slots, expose }) {
+      const componentRef = ref<ComponentPublicInstance | null>(null);
+
+      expose({
+        getComponentInstance: () => componentRef.value,
+        getManifest: () =>
+          (componentRef.value as ComponentPublicInstance & {
+            manifest?: unknown;
+          } | null)?.manifest,
+      });
+
       return () =>
         h(
           "div",
-          { class: "kivii-demo-lib-wrapper", style: "width:100%;height:100%;" },
-          [h(component, { ...props, ...attrs }, slots)]
+          { class: projectConfig.wrapperClass },
+          [h(component, { ...attrs, ref: componentRef }, slots)]
         );
     },
   });
 
-const ThemeSwitchTest = withWrapper(_ThemeSwitchTest);
+const UmdIntegrationTest = withWrapper(_UmdIntegrationTest);
 
 const components = {
-  ThemeSwitchTest,
+  UmdIntegrationTest,
 };
 
 // 定义安装函数
@@ -45,19 +62,20 @@ const install = (app: App) => {
 };
 
 export const manifest = {
-  libName: "VueComponent",
+  libName: projectConfig.libraryName,
   format: "umd",
-  fileName: "kivii-component-demo-library.umd.js",
-  zhName: "组件库 UMD 包",
-  author: "Kivii & Wemt Team",
-  version: "1.0.0",
-  description: "Kivii Component 组件库 UMD 包，提供基础演示组件。",
+  fileName: projectConfig.fileName,
+  wrapperClass: projectConfig.wrapperClass,
+  zhName: projectConfig.displayName,
+  author: projectConfig.author,
+  version: projectConfig.version,
+  description: projectConfig.description,
   components: Object.keys(components),
   componentsMap: {
-    ThemeSwitchTest: "Test module for verifying theme switching capabilities with pure Tailwind CSS.",
+    UmdIntegrationTest: "Test module for verifying UMD loading, event forwarding, and theme switching.",
   },
   componentsDetailed: [
-    { name: "ThemeSwitchTest", zhName: "主题测试", icon: "fas fa-palette", description: "Test module for verifying theme switching capabilities with pure Tailwind CSS." },
+    { name: "UmdIntegrationTest", zhName: "UMD 集成测试", icon: "fas fa-vial", description: "Test module for verifying UMD loading, event forwarding, and theme switching." },
   ],
 };
 

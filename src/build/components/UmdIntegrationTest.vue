@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold flex items-center gap-2">
           <i class="fas fa-palette text-indigo-500"></i>
-          <span>Theme Switch Test Module</span>
+          <span>UMD Integration Test Module</span>
         </h2>
         <div class="flex items-center gap-2">
           <span class="text-sm text-slate-500 dark:text-slate-400">Current Theme:</span>
@@ -16,8 +16,8 @@
       </div>
       
       <p class="mb-6 text-slate-600 dark:text-slate-300 leading-relaxed">
-        This module demonstrates theme switching capabilities using pure Tailwind CSS. 
-        The theme state is controlled externally via props, ensuring seamless integration with the parent application's state management.
+        This module verifies UMD loading, wrapper event forwarding, and theme switching.
+        The theme state is controlled externally through props to match the host application's integration contract.
       </p>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -39,7 +39,7 @@
           </div>
           <h3 class="font-semibold mb-2 text-blue-800 dark:text-blue-100">Accent Card</h3>
           <p class="text-sm text-blue-600 dark:text-blue-300">
-            Uses semantic colors for emphasis and highlights.
+            Uses semantic colors for emphasis and highlights.22222222222
           </p>
         </div>
 
@@ -80,9 +80,9 @@ import { Manifest } from '@/build/types'
  * Component Configuration
  */
 const manifest: Manifest = {
-  name: 'ThemeSwitchTest',
+  name: 'UmdIntegrationTest',
   type: 'component',
-  description: 'Test module for verifying theme switching capabilities with pure Tailwind CSS.',
+  description: 'Test module for verifying UMD loading, event forwarding, and theme switching.',
   version: '1.0.0',
   author: 'Developer',
 }

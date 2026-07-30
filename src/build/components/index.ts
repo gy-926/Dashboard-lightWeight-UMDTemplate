@@ -1,6 +1,6 @@
 /**
  * 组件库导出模块（统一导出）
  */
-import ThemeSwitchTest from "./ThemeSwitchTest.vue";
+import UmdIntegrationTest from "./UmdIntegrationTest.vue";
 
-export { ThemeSwitchTest };
+export { UmdIntegrationTest };

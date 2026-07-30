@@ -6,15 +6,12 @@
 	"author": "Kivii & Wemt Team",
 	"license": "MIT",
 	"type": "module",
-	"main": "dist/kivii-component-template.umd.js",
-	"files": [
-		"dist"
-	],
 	"scripts": {
 		"dev": "vite",
-		"build": "vite build",
+		"build": "vite build && node scripts/validate-umd.mjs",
 		"preview": "vite preview",
-		"type-check": "vue-tsc --noEmit"
+		"type-check": "vue-tsc --noEmit",
+		"validate:umd": "node scripts/validate-umd.mjs"
 	},
 	"devDependencies": {
 		"@vitejs/plugin-vue": "^5.0.0",

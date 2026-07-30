@@ -255,8 +255,8 @@ async function fetchData() {
 
 ### 库文件输出
 
-- 路径: `dist/kivii-component-demo-library.umd.js`
-- 全局变量: `window.VueComponent`
+- 路径: `dist/vue-component-test.umd.js`（实际值以 `project.config.js` 为准）
+- 全局变量: `window.vueComponent3`（实际值以 `project.config.js` 为准）
 - CSS: 已内联注入到 JS 中，无需单独引用。
 
 ### 配置文件路径
