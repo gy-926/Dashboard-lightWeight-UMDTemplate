@@ -72,13 +72,7 @@ umd-test.html                独立 HTML 加载示例
 ```html
 <script src="/vendor/vue.global.js"></script>
 <script src="/vendor/echarts.min.js"></script>
-<script>
-  window.kivii = {
-    request(options) {
-      // 主项目 Bridge 实现
-    },
-  }
-</script>
+<script src="/vendor/kivii.bridge.min.js"></script>
 <script src="/components/vue-component-test.umd.js"></script>
 ```
 
@@ -130,4 +124,4 @@ componentRef.value.getComponentInstance()
 - 多个 UMD 项目的 `wrapperClass` 不得重复。
 - 全局 CSS 变量仍会遵循浏览器级联规则。
 
-更多约定见 `doc/AI_CODING_STANDARDS.md` 和 `doc/ui-design-spec.md`。
+新人请从 [`doc/README.md`](./doc/README.md) 开始，按需查阅开发、样式、AI 提示词和 UMD 接入专题。
