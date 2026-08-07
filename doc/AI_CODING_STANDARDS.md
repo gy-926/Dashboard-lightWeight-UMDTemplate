@@ -1,267 +1,123 @@
-# AI 开发规范与最佳实践 (AI Coding Standards & Best Practices)
+# AI 开发规范与提示词
 
-本规范旨在为团队成员及 AI 辅助工具（如 Trae, Copilot, ChatGPT 等）提供统一的开发标准。通过遵循本规范，我们可以确保生成的代码风格一致、结构清晰、易于维护，并完全兼容现有的开发指南。
+AI 生成的代码与人工代码使用同一套验收标准。AI 可以加速实现，但不能替代对现有代码、类型检查和构建结果的核对。
 
----
+## 使用方法
 
-## 1. 核心原则 (Core Principles)
+1. 先让 AI 阅读本文件、[开发指南](./DEVELOPMENT_GUIDE.md)和[UI 与样式约束](./ui-design-spec.md)。
+2. 明确业务目标、输入输出和禁止修改的范围。
+3. 要求 AI 先检查现有组件和配置，再直接修改代码。
+4. 要求 AI 运行 `pnpm run type-check` 和 `pnpm build`。
+5. 人工检查业务正确性、视觉效果和敏感信息。
 
-- **一致性 (Consistency)**: 无论是人工编写还是 AI 生成，必须遵循相同的代码风格和项目结构。
-- **模块化 (Modularity)**: 组件应职责单一，逻辑复杂时应抽取为 Composables。
-- **自描述 (Self-Describing)**: 代码应包含必要的类型定义和 Manifest 元数据，便于理解和工具解析。
-- **无障碍 (Accessibility)**: 始终考虑 Dark Mode 适配和响应式设计。
+不要只发送“帮我做一个页面”。缺少边界的提示词容易产生重复组件、随意配色、错误依赖和不可维护的样式。
 
----
+## 通用开发提示词
 
-## 2. 技术栈规范 (Tech Stack)
+复制后替换方括号内容：
 
-所有代码生成和开发必须严格基于以下技术版本：
+```text
+请在当前项目中实现【业务目标】。
 
-- **Framework**: Vue 3 (Composition API + `<script setup>`)
-- **Language**: TypeScript (Strict Mode)
-- **Build Tool**: Vite (UMD Build Target)
-- **Styling**: Tailwind CSS (v3.x)
-- **Icons**: FontAwesome (Class-based, e.g., `fas fa-home`)
+开始前完整阅读：
+- doc/README.md
+- doc/DEVELOPMENT_GUIDE.md
+- doc/ui-design-spec.md
+- 与需求直接相关的现有源码
 
----
+约束：
+1. 使用 Vue 3、TypeScript、<script setup> 和 Tailwind CSS。
+2. 复用现有组件、类型和工具，不引入新的 UI 框架。
+3. 同时支持亮色、暗色、窄屏和长文本。
+4. 颜色优先使用项目 CSS 变量和规范内的 slate/语义色，不自创设计体系。
+5. 数据请求只能通过 @kivii.com/bridge，禁止 fetch/axios。
+6. Props、Emits、公开方法和请求响应必须有类型。
+7. 不修改 UMD 加载协议、Vite/Tailwind 隔离配置或无关文件。
+8. 如新增对外组件，完成 index.ts 导出、withWrapper 注册、manifest 和开发预览。
+9. 修改对外接口、配置或流程时同步更新已有文档，不新增重复文档。
 
-## 3. 命名与目录规范 (Naming & Directory Standards)
-
-### 3.1 目录结构
-
-- **组件目录**: `src/build/components/`
-    - 单文件组件：`src/build/components/ComponentName.vue`
-    - 复杂组件包：`src/build/components/ComponentName/` (包含 `index.ts` 和多个 `.vue` 文件)
-- **类型定义**: `src/build/types/`
-- **工具函数**: `src/build/utils/`
-
-### 3.2 命名约定
-
-- **文件/目录名**: 严格使用 **PascalCase** (大驼峰)。
-    - ✅ `ProductClassification.vue`
-    - ❌ `productClassification.vue`, `product-classification.vue`
-- **组件名**: **PascalCase**，尽量由两个单词组成以避免冲突。
-    - ✅ `KvcCard`, `RiskEvaluation`
-    - ❌ `Card`, `Risk`
-- **Props/Emits**: **camelCase** (小驼峰)。
-    - ✅ `defineProps<{ userName: string }>()`
-- **事件名**: 模板中使用 kebab-case，脚本中使用 camelCase。
-    - Template: `@update:model-value`
-    - Script: `emit('update:modelValue')`
-
----
-
-## 4. 组件开发规范 (Component Standards)
-
-### 4.1 SFC 结构顺序
-
-所有 `.vue` 文件必须严格遵循以下顺序：
-
-1.  `<template>`
-2.  `<script setup lang="ts">`
-3.  `<style>` (尽量避免，优先使用 Tailwind)
-
-### 4.2 Script Setup 规范
-
-```vue
-<script setup lang="ts">
-// 1. Imports (Vue core -> Third party -> Local)
-import { computed, ref } from 'vue'
-import type { Manifest } from '@/build/types'
-
-// 2. Type Definitions (Props & Emits)
-export interface Props {
-	title?: string
-	theme?: 'light' | 'dark'
-}
-
-// 3. Component Manifest (MUST HAVE)
-const manifest: Manifest = {
-	name: 'MyComponent',
-	type: 'component',
-	description: '组件功能的简要描述',
-	version: '1.0.0',
-	author: 'Kivii Team',
-}
-
-// 4. Props with Defaults
-const props = withDefaults(defineProps<Props>(), {
-	title: 'Default Title',
-	theme: 'light',
-})
-
-// 5. Emits
-const emit = defineEmits<{
-	(e: 'click', id: string): void
-}>()
-
-// 6. State & Logic
-const isDark = computed(() => props.theme === 'dark')
-
-// 7. Expose (Optional)
-defineExpose({ manifest })
-</script>
+完成后运行 pnpm run type-check 和 pnpm build，并说明：
+- 修改了哪些文件；
+- 关键设计选择；
+- 验证结果；
+- 仍需人工检查的内容。
 ```
 
-### 4.3 组件元数据 (Manifest)
+## 新增组件提示词
 
-**强制要求**: 每个业务组件内部必须定义 `manifest` 常量，描述组件的基本信息。这有助于未来的自动化工具提取文档和元数据。
+```text
+请新增组件【ComponentName】，用于【业务场景】。
 
----
+输入：
+- Props：【列出字段、类型、默认值】
+- Slots：【列出插槽】
+- Events：【列出事件和参数】
+- 数据来源：【Bridge 接口或无请求】
 
-## 5. 样式规范 (Styling Standards)
+必须：
+- 文件名和组件名使用 PascalCase 且至少两个单词；
+- 组件内部定义并 expose manifest；
+- 使用 Tailwind，包含亮/暗主题和完整交互状态；
+- 处理 loading、空数据、错误和长文本；
+- 从 components/index.ts 导出；
+- 在 src/build.ts 中通过 withWrapper 注册并更新 manifest；
+- 在 src/dev 中通过 @/build 正式导出创建最小预览；
+- 扩展 scripts/validate-umd.mjs 的关键契约验证。
 
-### 5.1 Tailwind CSS 优先
-
-- 禁止编写传统的 `<style scoped>` CSS，除非遇到 Tailwind 无法解决的复杂动画或伪类。
-- 使用 Utility Classes 实现布局和样式。
-
-### 5.2 Dark Mode 适配 (强制)
-
-所有组件**必须**同时适配浅色和深色模式。
-
-- **规则**: 使用 `dark:` 前缀修饰深色模式样式。
-- **配置**: 确保父容器或 HTML 标签可以通过添加 `.dark` 类切换主题。
-- **背景色**:
-    - Light: `bg-white`, `bg-slate-50`
-    - Dark: `dark:bg-slate-900`, `dark:bg-slate-800`
-- **文本色**:
-    - Light: `text-slate-900`, `text-slate-600`
-    - Dark: `dark:text-white`, `dark:text-slate-300`
-- **边框色**:
-    - Light: `border-slate-200`
-    - Dark: `dark:border-slate-700`
-
-**示例代码**:
-
-```html
-<div
-	class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700"
->
-	<!-- Content -->
-</div>
+不要修改 project.config.js，除非组件代表一个全新的 UMD 项目。
 ```
 
----
+## 修复问题提示词
 
-## 6. 工程化与导出规范 (Engineering & Export)
+```text
+请诊断并修复【现象】。
 
-### 6.1 组件导出流程
+复现条件：【操作步骤】
+期望结果：【正确行为】
+实际结果：【错误行为】
+范围限制：【允许修改的目录或文件】
 
-当创建一个新组件 `NewComponent` 时，必须完成以下三个步骤：
-
-1.  **开发组件**: 在 `src/build/components/NewComponent.vue` 中完成代码。
-2.  **统一导出**: 在 `src/build/components/index.ts` 中添加导出语句。
-    ```typescript
-    import NewComponent from './NewComponent.vue'
-    export { NewComponent }
-    ```
-3.  **注册元数据**: 在 `src/build.ts` 的 `manifest` 对象中添加描述。
-    - `componentsMap`: 添加简短描述。
-    - `componentsDetailed`: 添加详细对象 `{ name, zhName, icon, description }`。
-
-### 6.2 外部依赖处理
-
-- **Vue**: 保持为 `external`，不要打包进 UMD。
-- **图标**: 使用 FontAwesome 类名（如 `fas fa-user`），假设宿主环境已加载 FontAwesome CSS。
-
----
-
-## 7. AI 辅助开发指令 (Prompts for AI)
-
-当要求 AI 生成组件时，建议附带以下指令以确保符合规范：
-
-> "请创建一个 Vue 3 + TypeScript 组件，使用 `<script setup>` 语法。样式必须使用 Tailwind CSS 并完全适配 Dark Mode（使用 `dark:` 前缀）。组件内部必须包含 `Manifest` 定义。请确保文件名和组件名使用 PascalCase。完成后，请给出在 `index.ts` 和 `src/build.ts` 中注册该组件所需的代码片段。"
-
----
-
-## 8. 图表规范 (Charts)
-
-- 统一使用 ECharts 作为图表库。
-- 安装依赖：`pnpm add echarts`。
-- 构建外部化：在 UMD 构建中将 `echarts` 标记为 external，并在 `globals` 中声明 `echarts`，宿主环境通过 CDN 提供全局变量 `window.echarts`。
-- 代码引用：在组件中使用 `import * as echarts from 'echarts'` 获取类型与 API，打包不会内联（因 external）。
-- 运行假设：宿主页面必须先通过 CDN 脚本加载 ECharts，例如 `https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js`。
-
-示例（组件内最小使用模版）：
-
-```vue
-<template>
-	<div ref="chartRef" class="w-full h-64"></div>
-</template>
-<script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-import * as echarts from 'echarts'
-
-const chartRef = ref<HTMLDivElement | null>(null)
-let chart: echarts.ECharts | null = null
-
-onMounted(() => {
-	if (!chartRef.value) return
-	chart = echarts.init(chartRef.value)
-	chart.setOption({
-		xAxis: { type: 'category', data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] },
-		yAxis: { type: 'value' },
-		series: [{ type: 'line', data: [120, 200, 150, 80, 70] }],
-	})
-})
-
-onBeforeUnmount(() => {
-	chart?.dispose()
-})
-</script>
+先定位根因并检查是否影响 Props、Events、Slots、Ref、样式隔离或 UMD Registry；
+再做最小范围修复。不要顺手重构无关代码。
+修复后运行类型检查和构建，并说明根因、修复点和回归风险。
 ```
 
-构建配置要求（参考 `vite.config.ts`）：
+## UI 评审提示词
 
-```ts
-rollupOptions: {
-  external: ['vue', 'echarts', '@kivii.com/bridge'],
-  output: {
-    globals: { vue: 'Vue', echarts: 'echarts', '@kivii.com/bridge': 'kivii' },
-  },
-}
+```text
+请依据 doc/ui-design-spec.md 审查【文件或组件】，直接修复明确违规项。
+
+重点检查：
+- 是否擅自使用颜色、字号、圆角、阴影和任意值；
+- 亮色/暗色是否成对；
+- hover、focus-visible、disabled、loading、空数据和错误状态是否完整；
+- 窄屏、长文本、表格溢出是否安全；
+- 图标按钮是否有 aria-label；
+- 是否存在影响宿主的全局 CSS 或绕过 wrapper 的导出。
+
+保持业务逻辑和对外 API 不变。完成后列出已修复项和需人工确认项。
 ```
 
-## 9. 数据请求规范 (Bridge)
+## 文档整理提示词
 
-- 数据请求统一通过 `window.kivii.request` 进行，禁止在组件内直接使用 `fetch/axios` 等。
-- 宿主环境需通过 CDN 注入 `window.kivii`（例如 `<script src=".../bridge.min.js"></script>`）。
-- 类型提示：全局类型已在 `env.d.ts` 声明。
-- 失败处理：调用前需判断 `window.kivii?.request` 是否存在并进行错误兜底。
+```text
+请更新与本次改动直接相关的现有文档。
 
-示例：
-
-```ts
-async function fetchData() {
-	if (!window.kivii?.request) throw new Error('Bridge not available')
-	return window.kivii.request<{ ok: boolean }>({
-		url: '/api/example',
-		method: 'GET',
-	})
-}
+规则：
+- 以实际代码和 project.config.js 为准；
+- 修改现有专题，不创建内容相近的新文件；
+- 删除过期命令、旧名称、重复示例和实现细节堆砌；
+- 面向新人写清“做什么、不能做什么、如何验证”；
+- 检查 doc/README.md 与根 README 的链接；
+- 最后报告文档行数变化和被合并/删除的重复内容。
 ```
 
-## 附录：开发指南摘要
+## AI 输出验收清单
 
-以下内容摘自 `DEVELOPMENT_GUIDE.md`，作为快速参考。
-
-以下内容摘自 `DEVELOPMENT_GUIDE.md`，作为快速参考。
-
-### 快速常用命令
-
-- `pnpm dev`: 启动开发服务器
-- `pnpm build`: 构建 UMD 库
-
-### 库文件输出
-
-- 路径: `dist/vue-component-test.umd.js`（实际值以 `project.config.js` 为准）
-- 全局变量: `window.vueComponent3`（实际值以 `project.config.js` 为准）
-- CSS: 已内联注入到 JS 中，无需单独引用。
-
-### 配置文件路径
-
-- Vite: `vite.config.ts`
-- Tailwind: `tailwind.config.js`
-- 库入口: `src/build.ts`
-- 组件入口: `src/build/components/index.ts`
+- 没有虚构文件、API、依赖或构建结果；
+- 没有把 Vue、ECharts、Bridge 打进 UMD；
+- 没有直接请求后端或硬编码密钥、Token、域名；
+- 没有绕过 `project.config.js` 和 `withWrapper()`；
+- 没有使用不在 UI 规范中的随意颜色和夸张动效；
+- 没有留下未使用代码、调试日志或冲突标记；
+- 类型检查和构建真实执行且通过。

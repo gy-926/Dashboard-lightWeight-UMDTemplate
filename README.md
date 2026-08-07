@@ -76,13 +76,7 @@ Load the external dependencies before the UMD bundle:
 ```html
 <script src="/vendor/vue.global.js"></script>
 <script src="/vendor/echarts.min.js"></script>
-<script>
-  window.kivii = {
-    request(options) {
-      // Host Bridge implementation
-    },
-  }
-</script>
+<script src="/vendor/kivii.bridge.min.js"></script>
 <script src="/components/vue-component-test.umd.js"></script>
 ```
 
@@ -123,7 +117,7 @@ componentRef.value.getComponentInstance()
 
 Tailwind Preflight is disabled, and selector strategy scopes utilities beneath the unique wrapper. This reduces host/UMD style leakage but is not Shadow DOM isolation: high-specificity host rules, `!important`, CSS variables, and externally loaded icon styles still follow normal browser cascading.
 
-See the [Development Guide](doc/DEVELOPMENT_GUIDE.md), [Tailwind Isolation Guide](doc/TAILWIND_ISOLATION_GUIDE.md), [UMD Usage Guide](doc/UMD读取指南.md), [UI Design Spec](doc/ui-design-spec.md), and [AI Coding Standards](doc/AI_CODING_STANDARDS.md) for details.
+Start from the [documentation center](doc/README.md), then open the development, UI, AI prompt, UMD integration, or isolation topic as needed.
 
 ### License
 
@@ -205,13 +199,7 @@ umd-test.html                独立 HTML 加载示例
 ```html
 <script src="/vendor/vue.global.js"></script>
 <script src="/vendor/echarts.min.js"></script>
-<script>
-  window.kivii = {
-    request(options) {
-      // 主项目 Bridge 实现
-    },
-  }
-</script>
+<script src="/vendor/kivii.bridge.min.js"></script>
 <script src="/components/vue-component-test.umd.js"></script>
 ```
 
@@ -252,7 +240,7 @@ componentRef.value.getComponentInstance()
 
 项目关闭 Tailwind Preflight，并使用 selector strategy 把工具类限制在唯一 wrapper 下。这能显著降低 UMD 与主项目互相污染，但不是 Shadow DOM 级别的绝对隔离：主项目的高权重选择器、`!important`、CSS 变量和外部图标样式仍遵循浏览器级联规则。
 
-更多约定见[开发指南](doc/DEVELOPMENT_GUIDE.md)、[Tailwind 隔离指南](doc/TAILWIND_ISOLATION_GUIDE.md)、[UMD 读取指南](doc/UMD读取指南.md)、[UI 设计规范](doc/ui-design-spec.md)和[AI 编码规范](doc/AI_CODING_STANDARDS.md)。
+新人请从 [`doc/README.md`](./doc/README.md) 开始，按需查阅开发、样式、AI 提示词和 UMD 接入专题。
 
 ### 许可证
 

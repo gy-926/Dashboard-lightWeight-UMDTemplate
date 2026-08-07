@@ -1,54 +1,62 @@
 # UMD 加载与运行时契约
 
-本项目构建一个单业务 UMD，由主项目通过 `<script>` 加载。库的身份、文件名和样式隔离类来自根目录 `project.config.js`。
+本文面向主项目接入人员。组件开发流程见 [新人开发指南](./DEVELOPMENT_GUIDE.md)。
 
-## 构建
+## 构建产物
 
 ```bash
 pnpm build
 ```
 
-构建会清空 `dist`，生成一个 UMD 文件，并自动运行 `scripts/validate-umd.mjs`。验证失败时构建命令会以非零状态退出，不应部署该产物。
+命令会清空 `dist`、生成 `project.config.js` 指定的单个 UMD 文件，并运行 `scripts/validate-umd.mjs`。验证失败时不得发布。
 
-## 浏览器加载顺序
+## 加载顺序
+
+宿主先加载外部依赖，再加载业务 UMD：
 
 ```html
 <script src="/vendor/vue.global.js"></script>
 <script src="/vendor/echarts.min.js"></script>
-<script>
-  window.kivii = {
-    request(options) {
-      // Bridge 实现
-    },
-  }
-</script>
+<script src="/vendor/kivii.bridge.min.js"></script>
 <script src="/components/vue-component-test.umd.js"></script>
 ```
 
-依赖与全局变量的映射在 `vite.config.ts` 中定义：
+| 模块 | 宿主全局变量 | 必需条件 |
+| --- | --- | --- |
+| `vue` | `window.Vue` | 始终必需 |
+| `echarts` | `window.echarts` | 组件使用图表时 |
+| `@kivii.com/bridge` | `window.kivii` | 组件请求数据时 |
 
-| 外部模块 | 浏览器全局变量 |
-| --- | --- |
-| `vue` | `Vue` |
-| `echarts` | `echarts` |
-| `@kivii.com/bridge` | `kivii` |
+宿主必须保证依赖版本兼容，不得让业务 UMD 再携带第二份 Vue。
 
-没有被组件实际引用的外部依赖不会出现在最终 Rollup 依赖参数中，但主项目应按照所加载组件的真实需求提供依赖。
+## 查找和注册
 
-## 注册和识别
+推荐按 Registry 查找，旧系统可以继续使用全局变量：
 
 ```js
-const library = window.vueComponent3
+const fileName = 'vue-component-test.umd.js'
+const library =
+  window.__KIVII_UMD_REGISTRY__?.byFileName?.[fileName] ??
+  window.vueComponent3
 
-if (!library) {
-  throw new Error('UMD 加载失败')
-}
+if (!library) throw new Error(`UMD 加载失败：${fileName}`)
 
 app.use(library)
 console.log(library.manifest)
 ```
 
-典型 manifest：
+UMD 会注册到：
+
+```js
+window.__KIVII_UMD_REGISTRY__.byUrl[document.currentScript.src]
+window.__KIVII_UMD_REGISTRY__.byFileName[manifest.fileName]
+```
+
+主项目应对 URL 去重，避免重复执行脚本和重复注入 CSS。不要仅依赖后端保存的 `GlobalName`。
+
+## Manifest
+
+主项目至少校验以下字段：
 
 ```js
 {
@@ -61,53 +69,48 @@ console.log(library.manifest)
 }
 ```
 
+加载器应记录 URL、文件名、版本和失败原因。字段缺失或组件清单不符合预期时，不要继续静默渲染。
+
 ## Props、Events、Slots 和 Ref
 
-对外组件经过 `src/build.ts` 的 `withWrapper()` 增加样式作用域。包装器不声明内部组件的 Props 和 Events，而是把 attributes、事件监听器和 slots 原样交给内部组件。
+组件经过 wrapper 后仍会透传 Props、Events 和 Slots：
 
 ```vue
 <UmdIntegrationTest
-  ref="themeComponent"
+  ref="componentRef"
   :theme="theme"
   @toggle-theme="toggleTheme"
-/>
+>
+  <template #default>内容</template>
+</UmdIntegrationTest>
 ```
 
-组件 ref 指向包装器公开接口：
+Ref 指向 wrapper 公开接口：
 
 ```js
-themeComponent.value.getManifest()
-themeComponent.value.getComponentInstance()
+componentRef.value.getManifest()
+componentRef.value.getComponentInstance()
 ```
 
-不要假设 ref 会直接等于内部 Vue 组件实例。
+不要依赖内部 Vue 实例的私有字段。
 
-## 多个 UMD 共存
+## 多 UMD 共存
 
-每个 UMD 必须拥有唯一的 `libraryName`、`fileName` 和 `wrapperClass`。主项目还需要管理加载顺序、版本兼容和卸载策略。
+每个项目的 `libraryName`、`fileName` 和 `wrapperClass` 必须唯一。主项目还需负责：
 
-重复加载同一个 UMD 会重新执行 CSS 注入，因此主项目应对 URL 做去重。
+- URL 去重和加载超时；
+- Vue、ECharts 和 Bridge 版本兼容；
+- 路由离开时卸载组件和释放图表、监听器、定时器；
+- Registry 冲突提示；
+- 脚本加载失败、组件渲染失败和 Bridge 请求失败的可见错误状态。
 
-新模板还会自动注册：
+## 接入验收
 
-```js
-window.__KIVII_UMD_REGISTRY__.byUrl[document.currentScript.src]
-window.__KIVII_UMD_REGISTRY__.byFileName[manifest.fileName]
-```
-
-主项目应优先读取 Registry，同时保留显式 `GlobalName` 和 `window.VueComponent` 回退，以兼容已经交付的旧 UMD。
-
-## 发布前检查
-
-```bash
-pnpm run type-check
-pnpm build
-```
-
-构建成功输出应包含：
-
-```text
-✓ UMD validated: ... → window....
-```
-
-此外建议在主项目的测试环境加载真实产物，验证路由切换、主题、Bridge 请求和多个 UMD 同时存在的情况。
+- [ ] 网络中只下载一个业务 UMD，且没有第二份 Vue；
+- [ ] Registry 能按 URL 和文件名读取同一个 library；
+- [ ] `app.use(library)` 正确注册 manifest 中的组件；
+- [ ] Props、Events、Slots 和 Ref 行为正确；
+- [ ] 亮色、暗色与宿主全局样式共存；
+- [ ] 路由反复进入离开后没有重复监听和图表实例；
+- [ ] 两个不同 UMD 同时加载时不覆盖全局变量或 wrapper；
+- [ ] 加载失败和依赖缺失时向用户显示可理解的提示。
