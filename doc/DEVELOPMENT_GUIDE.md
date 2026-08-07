@@ -154,7 +154,7 @@ Tailwind 配置文件位于 `tailwind.config.js`。
 
 组件库通常是被动接收主题状态。推荐的做法是通过 `props` 接收主题设置，或者让宿主应用控制容器的 `class="dark"`。
 
-参考 `src/build/components/ThemeSwitchTest.vue` 的实现，它通过 `props.theme` 来动态绑定 `.dark` 类。
+参考 `src/build/components/UmdIntegrationTest.vue` 的实现，它通过 `props.theme` 来动态绑定 `.dark` 类。
 
 ---
 
@@ -165,8 +165,8 @@ Tailwind 配置文件位于 `tailwind.config.js`。
 ### 5.1 输出配置
 
 - **格式**: `umd`
-- **文件名**: `kivii-component-demo-library.umd.js`
-- **全局变量**: `VueComponent` (在浏览器中通过 `window.VueComponent` 访问)
+- **文件名**: `vue-component-test.umd.js`（实际值以 `project.config.js` 为准）
+- **全局变量**: `vueComponent3`（通过 `window.vueComponent3` 访问，实际值以 `project.config.js` 为准）
 
 ### 5.2 外部依赖
 
@@ -280,15 +280,15 @@ const install = (app: App) => {
 
 | 字段                 | 类型                     | 说明                           | 示例                             |
 | :------------------- | :----------------------- | :----------------------------- | :------------------------------- |
-| `libName`            | `string`                 | 库的内部名称                   | `"VueComponent"`                 |
+| `libName`            | `string`                 | 库的内部名称                   | `"vueComponent3"`                |
 | `format`             | `string`                 | 构建格式                       | `"umd"`                          |
 | `fileName`           | `string`                 | 输出文件名                     | `"library.umd.js"`               |
-| `zhName`             | `string`                 | 库的中文名称                   | `"组件库 UMD 包"`                |
+| `zhName`             | `string`                 | 库的中文名称                   | `"Vue UMD 集成测试组件"`         |
 | `author`             | `string`                 | 作者/团队                      | `"Kivii Team"`                   |
-| `version`            | `string`                 | 版本号                         | `"1.0.0"`                        |
+| `version`            | `string`                 | 版本号                         | `"0.1.0"`                        |
 | `description`        | `string`                 | 库的简要描述                   | `"..."`                          |
-| `components`         | `string[]`               | 包含的所有组件键名列表         | `['ThemeSwitchTest', ...]`       |
-| `componentsMap`      | `Record<string, string>` | 组件键名到描述的简单映射       | `{ ThemeSwitchTest: "描述..." }` |
+| `components`         | `string[]`               | 包含的所有组件键名列表         | `['UmdIntegrationTest', ...]`    |
+| `componentsMap`      | `Record<string, string>` | 组件键名到描述的简单映射       | `{ UmdIntegrationTest: "描述..." }` |
 | `componentsDetailed` | `object[]`               | 组件的详细元数据数组（见下表） | `[{ name: "...", ... }]`         |
 
 **componentsDetailed 结构详解:**
@@ -322,7 +322,7 @@ export interface Manifest {
 
 ```typescript
 const manifest: Manifest = {
-	name: 'ThemeSwitchTest',
+	name: 'UmdIntegrationTest',
 	type: 'component',
 	description: 'Test module for verifying theme switching...',
 	version: '1.0.0',
@@ -343,7 +343,7 @@ const manifest: Manifest = {
 为了确保组件库的样式既不污染宿主环境，也不被宿主环境覆盖，采用 Tailwind 的作用域限制与 Vue 高阶组件（HOC）包裹的组合方案。
 
 - 原理概述
-    - 编译期在 Tailwind 中设置 `important`，限定生成的类名都挂在唯一作用域 `.kivii-demo-lib-wrapper` 下，并提升权重。
+    - 编译期在 Tailwind 中设置 `important`，限定生成的类名都挂在唯一作用域 `.vue-component-test-wrapper` 下，并提升权重。
     - 运行期通过高阶组件统一为所有导出组件包裹一层带该类名的容器 div。
     - 宿主未添加该类名时不会被污染；宿主普通样式也难以覆盖库内样式。
 
@@ -355,7 +355,7 @@ const manifest: Manifest = {
 /** @type {import('tailwindcss').Config} */
 export default {
 	content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
-	important: '.kivii-demo-lib-wrapper',
+	important: '.vue-component-test-wrapper',
 	corePlugins: {
 		preflight: false,
 	},
@@ -376,7 +376,7 @@ export default {
 
 ```ts
 import { h, defineComponent } from 'vue'
-import { ThemeSwitchTest as _ThemeSwitchTest } from '@/build/components'
+import { UmdIntegrationTest as _UmdIntegrationTest } from '@/build/components'
 
 const withWrapper = (component: any) =>
 	defineComponent({
@@ -389,7 +389,7 @@ const withWrapper = (component: any) =>
 				h(
 					'div',
 					{
-						class: 'kivii-demo-lib-wrapper',
+						class: 'vue-component-test-wrapper',
 						style: 'width:100%;height:100%;',
 					},
 					[h(component, { ...props, ...attrs }, slots)],
@@ -397,8 +397,8 @@ const withWrapper = (component: any) =>
 		},
 	})
 
-const ThemeSwitchTest = withWrapper(_ThemeSwitchTest)
-export { ThemeSwitchTest }
+const UmdIntegrationTest = withWrapper(_UmdIntegrationTest)
+export { UmdIntegrationTest }
 ```
 
 ### 9.3 使用与注意事项

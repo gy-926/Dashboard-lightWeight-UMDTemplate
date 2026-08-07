@@ -1,125 +1,113 @@
- # UMD 读取指南
- 
- 本指南总结如何在打包生成 UMD 文件后，识别库的身份、文件名以及包含的组件，并在运行时读取这些信息。
- 
- ## 目标
- - 确认 UMD 库名、文件名、外部依赖全局变量
- - 获取库内包含的组件清单
- - 在浏览器与 Node 环境读取库信息
- - 获取组件级元信息（名称、版本、作者等）
- 
- ## 构建配置识别
- - 构建配置位置：`vite.config.ts`
- - 关键字段：
-   - `build.lib.name`: UMD 全局变量名（本项目为 `VueComponent`）
-   - `build.lib.fileName`: 输出文件名（本项目为 `kivii-component-demo-library.umd.js`）
-   - `build.lib.formats`: 输出格式（本项目为 `umd`）
-   - `rollupOptions.external/globals`: 外部依赖与全局映射（本项目将 `vue` 外部化，对应全局 `Vue`）
- 
- ## 浏览器环境读取
- 在浏览器中先引入 Vue（满足外部依赖），再引入 UMD 文件：
- 
- ```html
- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
- <script src="/dist/kivii-component-demo-library.umd.js"></script>
- <script>
-   // UMD 全局对象
-   const lib = window.VueComponent
- 
-   // 若入口暴露了 manifest（已在 src/build.ts 添加）
-   console.log('库名:', lib.manifest.libName)             // VueComponent
-   console.log('格式:', lib.manifest.format)               // umd
-   console.log('文件:', lib.manifest.fileName)             // kivii-component-demo-library.umd.js
-   console.log('组件清单:', lib.manifest.components)       // ['KvcCard', 'KvcCardChild', ...]
- 
-   // 枚举所有导出键（含 default、install、各组件等）
-   console.log('所有导出键:', Object.keys(lib))
- </script>
- ```
- 
- 说明：
- - UMD 全局对象名称来自 `build.lib.name`
- - 若压缩设置对属性名做了混淆（默认不会），请使用 `Object.keys(lib)` 来枚举导出，再按需筛选
- 
- ## Node/脚本环境读取
- UMD 包可被 `require` 加载（在 ESM 中可用 `createRequire`）：
- 
- ```js
- // ESM 环境下：
- import { createRequire } from 'node:module'
- const require = createRequire(import.meta.url)
- 
- // 加载 UMD 文件
- const lib = require('./dist/kivii-component-demo-library.umd.js')
- 
- // 读取库级 manifest 与导出键
- console.log(lib.manifest)
- console.log(Object.keys(lib)) // ['default','install','KvcCard',...,'manifest']
- ```
- 
- ## 组件级元信息（getManifest）
- 本项目各组件在内部通过 `defineExpose` 暴露了 `getManifest` 方法，可在运行时读取组件的名称、描述、版本、作者等：
- 
- ```html
- <div id="app"></div>
- <script type="module">
-   import { createApp, ref } from 'vue'
-   // 假设通过 UMD 全局读取
-   const { RiskEvaluation } = window.VueComponent
- 
-   const App = {
-     template: '<RiskEvaluation ref="comp" />',
-     setup() {
-       const comp = ref()
-       setTimeout(() => {
-         // 组件挂载后读取暴露的 getManifest
-         console.log(comp.value.getManifest())
-       }, 0)
-       return { comp }
-     },
-     components: { RiskEvaluation }
-   }
- 
-   createApp(App).mount('#app')
- </script>
- ```
- 
- 示例位置（部分）：
- - 风险评价模块：[src/build/components/RiskEvaluation/RiskEvaluation.vue](src/build/components/RiskEvaluation/RiskEvaluation.vue)
- - 商品归类模块：[src/build/components/ProductClassification/ProductClassification.vue](src/build/components/ProductClassification/ProductClassification.vue)
- - 原始记录识别模块：[src/build/components/RecordRecognition/RecordRecognition.vue](src/build/components/RecordRecognition/RecordRecognition.vue)
- 
- ## 库级清单（入口增强）
- 为方便识别库内容，入口文件已增加 `manifest` 字段（位置：`src/build.ts`）：
- 
- ```ts
- export const manifest = {
-   libName: "VueComponent",
-   format: "umd",
-   fileName: "kivii-component-demo-library.umd.js",
-   components: Object.keys(components),
- }
- 
- export default {
-   install,
-   ...components,
-   manifest,
- }
- 
- export const VueDemoComponent = {
-   install,
-   ...components,
-   manifest,
- }
- ```
- 
- 读取方式：
- - 浏览器：`window.VueComponent.manifest`
- - Node：`require('./dist/xxx.umd.js').manifest`
- 
- ## 进阶与注意事项
- - 多模块 UMD：若希望“模块即文件”，可把每个模块作为独立入口，单独产出 UMD 文件（如 `ProductClassification.umd.js`、`RiskEvaluation.umd.js`）。UMD 更适合同一时间一个入口。
- - 文件头标注：可在 Rollup/Vite 中配置 `output.banner`，将库名/版本/组件摘要写入文件头，便于人工查看。
- - 外部依赖：确保先以全局变量方式提供外部依赖（本项目为 `vue`→`Vue`），否则 UMD 在浏览器中不可用。
- - 枚举导出：若属性名被压缩/混淆，可使用 `Object.keys(window.VueComponent)` 获取导出键，再按需过滤。
- 
+# UMD 加载与运行时契约
+
+本项目构建一个单业务 UMD，由主项目通过 `<script>` 加载。库的身份、文件名和样式隔离类来自根目录 `project.config.js`。
+
+## 构建
+
+```bash
+pnpm build
+```
+
+构建会清空 `dist`，生成一个 UMD 文件，并自动运行 `scripts/validate-umd.mjs`。验证失败时构建命令会以非零状态退出，不应部署该产物。
+
+## 浏览器加载顺序
+
+```html
+<script src="/vendor/vue.global.js"></script>
+<script src="/vendor/echarts.min.js"></script>
+<script>
+  window.kivii = {
+    request(options) {
+      // Bridge 实现
+    },
+  }
+</script>
+<script src="/components/vue-component-test.umd.js"></script>
+```
+
+依赖与全局变量的映射在 `vite.config.ts` 中定义：
+
+| 外部模块 | 浏览器全局变量 |
+| --- | --- |
+| `vue` | `Vue` |
+| `echarts` | `echarts` |
+| `@kivii.com/bridge` | `kivii` |
+
+没有被组件实际引用的外部依赖不会出现在最终 Rollup 依赖参数中，但主项目应按照所加载组件的真实需求提供依赖。
+
+## 注册和识别
+
+```js
+const library = window.vueComponent3
+
+if (!library) {
+  throw new Error('UMD 加载失败')
+}
+
+app.use(library)
+console.log(library.manifest)
+```
+
+典型 manifest：
+
+```js
+{
+  libName: 'vueComponent3',
+  format: 'umd',
+  fileName: 'vue-component-test.umd.js',
+  wrapperClass: 'vue-component-test-wrapper',
+  version: '0.1.0',
+  components: ['UmdIntegrationTest']
+}
+```
+
+## Props、Events、Slots 和 Ref
+
+对外组件经过 `src/build.ts` 的 `withWrapper()` 增加样式作用域。包装器不声明内部组件的 Props 和 Events，而是把 attributes、事件监听器和 slots 原样交给内部组件。
+
+```vue
+<UmdIntegrationTest
+  ref="themeComponent"
+  :theme="theme"
+  @toggle-theme="toggleTheme"
+/>
+```
+
+组件 ref 指向包装器公开接口：
+
+```js
+themeComponent.value.getManifest()
+themeComponent.value.getComponentInstance()
+```
+
+不要假设 ref 会直接等于内部 Vue 组件实例。
+
+## 多个 UMD 共存
+
+每个 UMD 必须拥有唯一的 `libraryName`、`fileName` 和 `wrapperClass`。主项目还需要管理加载顺序、版本兼容和卸载策略。
+
+重复加载同一个 UMD 会重新执行 CSS 注入，因此主项目应对 URL 做去重。
+
+新模板还会自动注册：
+
+```js
+window.__KIVII_UMD_REGISTRY__.byUrl[document.currentScript.src]
+window.__KIVII_UMD_REGISTRY__.byFileName[manifest.fileName]
+```
+
+主项目应优先读取 Registry，同时保留显式 `GlobalName` 和 `window.VueComponent` 回退，以兼容已经交付的旧 UMD。
+
+## 发布前检查
+
+```bash
+pnpm run type-check
+pnpm build
+```
+
+构建成功输出应包含：
+
+```text
+✓ UMD validated: ... → window....
+```
+
+此外建议在主项目的测试环境加载真实产物，验证路由切换、主题、Bridge 请求和多个 UMD 同时存在的情况。
